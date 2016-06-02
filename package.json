@@ -1,0 +1,47 @@
+{
+  "name": "vdux-fire",
+  "version": "0.1.0",
+  "description": "vdux firebase container",
+  "main": "lib/index.js",
+  "scripts": {
+    "prepublish": "npm run build",
+    "postpublish": "npm run clean",
+    "postversion": "git push && git push --tags && npm publish --access=public",
+    "validate": "standard",
+    "clean": "rm -rf lib",
+    "minify": "cat public/bundle.js | uglifyjs -o public/bundle.js",
+    "build": "babel src --out-dir lib",
+    "init:git": "git init && git add --all && git commit -am 'FIRST' && git remote add origin https://danleavitt0@github.com/ev3-js/ev3-judge.git && git push -u origin master",
+    "init:travis": "travis enable",
+    "postinit": "npm install && npm run init:git && npm run init:travis",
+    "test": "tape -r babel-register -r babel-polyfill test/*",
+    "dev": "budo lib/index.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danleavitt0/vdux-fire.git"
+  },
+  "author": "danleavitt0",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/danleavitt0/vdux-fire/issues"
+  },
+  "homepage": "https://github.com/danleavitt0/vdux-fire#readme",
+  "dependencies": {
+    "@f/create-action": "^1.1.1",
+    "@f/handle-actions": "^1.1.2",
+    "@f/map": "^1.5.3",
+    "@f/map-obj": "^1.2.2",
+    "@f/switch": "^1.0.1",
+    "firebase": "^3.0.3",
+    "redux-ephemeral": "^0.3.7",
+    "vdux": "^2.4.6"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-react-jsx": "^6.8.0",
+    "babel-plugin-transform-runtime": "^6.9.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-stage-2": "^6.5.0"
+  }
+}
