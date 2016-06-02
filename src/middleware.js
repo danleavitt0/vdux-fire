@@ -1,7 +1,7 @@
 import firebase from 'firebase'
 import createAction from '@f/create-action'
 import map from '@f/map'
-import reducer from '.reducer'
+import reducer from './reducer'
 import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
 
