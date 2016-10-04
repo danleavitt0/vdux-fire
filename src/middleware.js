@@ -38,7 +38,7 @@ const middleware = (config) => ({dispatch, getState}) => {
 	function set (payload) {
 		const {ref, value, method = 'set'} = payload
     if (db.ref(ref)[method]) {
-      db.ref(ref)[method](value)
+      return db.ref(ref)[method](value).key
     } else {
       throw new Error('No a valid firebase method')
     }
