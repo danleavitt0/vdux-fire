@@ -7,7 +7,7 @@ import {toEphemeral} from 'redux-ephemeral'
 
 import {subscribe, unsubscribe, invalidate, update, firebaseSet} from './actions'
 
-const refs = []
+let refs = []
 let db
 
 const middleware = (config) => ({dispatch, getState}) => {
@@ -15,7 +15,7 @@ const middleware = (config) => ({dispatch, getState}) => {
 	db = firebase.database()
 
 	return (next) => (action) => {
-		Switch({
+		return Switch({
 			[subscribe.type]: sub,
 			[unsubscribe.type]: unsub,
 			[invalidate.type]: inval,
