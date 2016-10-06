@@ -1,11 +1,10 @@
+/** @jsx element */
+
 import element from 'vdux/element'
-import firebase from 'firebase'
-import createAction from '@f/create-action'
-import handleActions from '@f/handle-actions'
 import reducer from './reducer'
 import map from '@f/map-obj'
 
-import {subscribe, unsubscribe, invalidate, update} from './actions'
+import {subscribe, unsubscribe} from './actions'
 
 function connect (fn) {
   return function (Ui) {
@@ -24,12 +23,9 @@ function connect (fn) {
         return subscribeAll(path, fn(props))
       },
 
-      render ({props, state, children, local, path}) {
-        const mapping = fn(props)
-        const fns = {}
-
+      render ({props, state, children}) {
         return (
-          <Ui {...state} {...fns} {...props}>
+          <Ui {...state} {...props}>
             {children}
           </Ui>
         )
@@ -46,7 +42,7 @@ function connect (fn) {
   }
 }
 
-function *subscribeAll (path, refs) {
+function * subscribeAll (path, refs) {
   for (let ref in refs) {
     yield subscribe({path, ref: refs[ref], name: ref})
   }

@@ -5,28 +5,29 @@ import reducer from './reducer'
 import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
 
-import {subscribe, unsubscribe, invalidate, update, firebaseSet} from './actions'
+import {subscribe, unsubscribe, invalidate, update, firebaseSet, once} from './actions'
 
 let refs = []
 let db
 
 const middleware = (config) => ({dispatch, getState}) => {
-	firebase.initializeApp(config)
-	db = firebase.database()
+  firebase.initializeApp(config)
+  db = firebase.database()
 
-	return (next) => (action) => {
-		return Switch({
-			[subscribe.type]: sub,
-			[unsubscribe.type]: unsub,
-			[invalidate.type]: inval,
-			[firebaseSet.type]: set,
-			default: () => next(action)
-		})(action.type, action.payload)
-	}
+  return (next) => (action) => {
+    return Switch({
+      [subscribe.type]: sub,
+      [unsubscribe.type]: unsub,
+      [invalidate.type]: inval,
+      [firebaseSet.type]: set,
+      [once.type]: once,
+      default: () => next(action)
+    })(action.type, action.payload)
+  }
 
-	function inval (payload) {
-		const {ref, value, name} = payload
-		return map(path => dispatch(
+  function inval (payload) {
+    const {ref, value, name} = payload
+    return map((path) => dispatch(
 			toEphemeral(
 				path,
 				reducer,
@@ -34,49 +35,58 @@ const middleware = (config) => ({dispatch, getState}) => {
 			)),
 			refs[ref]
 		)
-	}
-	function set (payload) {
-		const {ref, value, method = 'set'} = payload
+  }
+  function set (payload) {
+    const {ref, value, method = 'set'} = payload
     if (db.ref(ref)[method]) {
       return db.ref(ref)[method](value).key
     } else {
       throw new Error('No a valid firebase method')
     }
-	}
+  }
 
-	function sub (payload) {
-		const {ref, path, name} = payload
-		if (!refs[ref] || refs[ref].length < 1) {
-			refs[ref] = [path]
-			addListener(ref, name)
-		} else {
-			if (refs[ref].indexOf(path) === -1) {
-				refs[ref].push(path)
-			}
-		}
-	}
+  function once (payload) {
+    const {ref, listener = 'value'} = payload
+    if (db.ref(ref).once[listener]) {
+      return db.ref(ref).once(listener)
+    } else {
+      throw new Error('No a valid firebase method')
+    }
+  }
 
-	function unsub (path) {
-		for (var ref in refs) {
-			const idx = refs[ref].indexOf(path)
-			if (idx !== -1) {
-				refs[ref].splice(idx, 1)
-				if (refs[ref].length < 1) {
-					removeListener(ref)
-				}
-			}
-		}
-	}
+  function sub (payload) {
+    const {ref, path, name} = payload
+    if (!refs[ref] || refs[ref].length < 1) {
+      refs[ref] = [path]
+      addListener(ref, name)
+    } else {
+      if (refs[ref].indexOf(path) === -1) {
+        refs[ref].push(path)
+      }
+    }
+  }
 
-	function removeListener (ref) {
-		var dbref = db.ref(ref)
-		dbref.off('value')
-	}
+  function unsub (path) {
+    for (var ref in refs) {
+      const idx = refs[ref].indexOf(path)
+      if (idx !== -1) {
+        refs[ref].splice(idx, 1)
+        if (refs[ref].length < 1) {
+          removeListener(ref)
+        }
+      }
+    }
+  }
 
-	function addListener (ref, name) {
-		var dbref = db.ref(ref)
-		dbref.on('value', (snap) => dispatch(invalidate({ref, name, value: snap.val()})))
-	}
+  function removeListener (ref) {
+    var dbref = db.ref(ref)
+    dbref.off('value')
+  }
+
+  function addListener (ref, name) {
+    var dbref = db.ref(ref)
+    dbref.on('value', (snap) => dispatch(invalidate({ref, name, value: snap.val()})))
+  }
 }
 
 export default middleware

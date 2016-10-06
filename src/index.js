@@ -1,9 +1,10 @@
 import middleware from './middleware'
 import connect from './connect'
-import {firebaseSet} from './actions'
+import {firebaseSet, once} from './actions'
 
 export default connect
 export {
   middleware,
-  firebaseSet
+  firebaseSet,
+  once
 }
