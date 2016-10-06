@@ -20,7 +20,7 @@ const middleware = (config) => ({dispatch, getState}) => {
       [unsubscribe.type]: unsub,
       [invalidate.type]: inval,
       [firebaseSet.type]: set,
-      [once.type]: once,
+      [once.type]: onceFn,
       default: () => next(action)
     })(action.type, action.payload)
   }
@@ -45,7 +45,7 @@ const middleware = (config) => ({dispatch, getState}) => {
     }
   }
 
-  function once (payload) {
+  function onceFn (payload) {
     const {ref, listener = 'value'} = payload
     if (db.ref(ref).once[listener]) {
       return db.ref(ref).once(listener)
