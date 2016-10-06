@@ -47,11 +47,7 @@ const middleware = (config) => ({dispatch, getState}) => {
 
   function onceFn (payload) {
     const {ref, listener = 'value'} = payload
-    if (db.ref(ref).once[listener]) {
-      return db.ref(ref).once(listener)
-    } else {
-      throw new Error('No a valid firebase method')
-    }
+    return db.ref(ref).once(listener)
   }
 
   function sub (payload) {
