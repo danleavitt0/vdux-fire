@@ -11,6 +11,7 @@
     "clean": "rm -rf lib",
     "minify": "cat public/bundle.js | uglifyjs -o public/bundle.js",
     "build": "babel src --out-dir lib",
+    "watch": "babel src --out-dir lib --watch",
     "init:git": "git init && git add --all && git commit -am 'FIRST' && git remote add origin https://danleavitt0@github.com/ev3-js/ev3-judge.git && git push -u origin master",
     "init:travis": "travis enable",
     "postinit": "npm install && npm run init:git && npm run init:travis",
@@ -30,6 +31,7 @@
   "homepage": "https://github.com/danleavitt0/vdux-fire#readme",
   "dependencies": {
     "@f/create-action": "^1.1.1",
+    "@f/equal-obj": "^1.2.1",
     "@f/handle-actions": "^1.1.2",
     "@f/map": "^1.5.3",
     "@f/map-obj": "^1.2.2",

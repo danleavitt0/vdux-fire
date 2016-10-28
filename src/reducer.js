@@ -1,9 +1,12 @@
 import {update} from './actions'
+import createAction from '@f/create-action'
+
+const mapNewState = createAction('MAP_NEW_STATE')
 
 export default function (state, action) {
   switch (action.type) {
     case update.type:
-      let {value, name} = action.payload
+      var {value, name} = action.payload
       return {
         ...state,
         [name]: {
@@ -13,6 +16,15 @@ export default function (state, action) {
           value
         }
       }
+    case mapNewState.type:
+      var {value, name} = action.payload
+      return {
+        ...state,
+        ...action.payload
+      }
   }
   return state
+}
+export {
+  mapNewState
 }
