@@ -34,7 +34,6 @@ function connect (fn) {
       },
 
       onUpdate (prev, next) {
-        console.log(fn(next.props))
         if (!equalObj(fn(prev.props), fn(next.props))) {
           return [
             unsubscribeAll(next.path, fn(next.props)),
