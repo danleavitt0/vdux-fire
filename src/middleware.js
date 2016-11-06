@@ -4,7 +4,7 @@ import reducer from './reducer'
 import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
 
-import {subscribe, unsubscribe, invalidate, update, firebaseSet, once} from './actions'
+import {subscribe, unsubscribe, invalidate, update, refMethod, once} from './actions'
 
 let refs = []
 let db
@@ -18,7 +18,7 @@ const middleware = (config) => ({dispatch, getState}) => {
       [subscribe.type]: sub,
       [unsubscribe.type]: unsub,
       [invalidate.type]: inval,
-      [firebaseSet.type]: set,
+      [refMethod.type]: set,
       [once.type]: onceFn,
       default: () => next(action)
     })(action.type, action.payload)
@@ -38,7 +38,7 @@ const middleware = (config) => ({dispatch, getState}) => {
   function set (payload) {
     const {ref, value, method = 'set'} = payload
     if (db.ref(ref)[method]) {
-      return db.ref(ref)[method](value).key
+      return db.ref(ref)[method](value)
     } else {
       throw new Error('No a valid firebase method')
     }

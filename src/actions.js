@@ -4,7 +4,7 @@ const subscribe = createAction('vdux-fireSummon: subscribe')
 const unsubscribe = createAction('vdux-fireSummon: unsubscribe')
 const invalidate = createAction('vdux-fireSummon: invalidate')
 const update = createAction('vdux-fireSummon: update')
-const firebaseSet = createAction('vdux-fireSummon: set')
+const refMethod = createAction('vdux-fireSummon: refMethod')
 const once = createAction('vdux-fireSummon: once')
 
 export {
@@ -12,6 +12,6 @@ export {
   unsubscribe,
   invalidate,
   update,
-  firebaseSet,
+  refMethod,
   once
 }
