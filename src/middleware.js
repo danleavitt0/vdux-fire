@@ -35,12 +35,19 @@ const middleware = (config) => ({dispatch, getState}) => {
 			refs[ref]
 		)
   }
+
   function set (payload) {
-    const {ref, value, method = 'set'} = payload
-    if (db.ref(ref)[method]) {
-      return db.ref(ref)[method](value)
+    const {ref, updates} = payload
+    const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
+    if (Array.isArray(updates)) {
+      return updates.reduce((prev, update) => set({ref: prev || dbRef, updates: update}), undefined)
+    }
+
+    const {method, value} = updates
+    if (dbRef[method]) {
+      return value ? dbRef[method](value) : dbRef[method]()
     } else {
-      throw new Error('No a valid firebase method')
+      throw new Error('Not a valid firebase method')
     }
   }
 
