@@ -31,6 +31,7 @@
   "homepage": "https://github.com/danleavitt0/vdux-fire#readme",
   "dependencies": {
     "@f/create-action": "^1.1.1",
+    "@f/deep-equal": "^1.0.2",
     "@f/equal-obj": "^1.2.1",
     "@f/handle-actions": "^1.1.2",
     "@f/map": "^1.5.3",
@@ -42,8 +43,10 @@
     "vdux": "^2.4.6"
   },
   "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-cli": "^6.18.0",
     "babel-plugin-transform-react-jsx": "^6.8.0",
-    "babel-plugin-transform-runtime": "^6.9.0",
+    "babel-plugin-transform-runtime": "^6.15.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-stage-2": "^6.5.0"
   }

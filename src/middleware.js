@@ -10,7 +10,6 @@ let refs = []
 let db
 
 const middleware = (config) => { 
-  console.log(config)
   firebase.initializeApp(config)
   db = firebase.database()
   return ({dispatch, getState}) => {
@@ -37,18 +36,12 @@ const middleware = (config) => {
   		)
     }
 
-    function flattenRef (payload) {
+    function set (payload) {
       const {ref, updates} = payload
       const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
       if (Array.isArray(updates)) {
-        return updates.reduce((prev, update) => flattenRef({ref: prev || dbRef, updates: update}), undefined)
+        return updates.reduce((prev, update) => set({ref: prev || dbRef, updates: update}), undefined)
       }
-      return dbRef
-    }
-
-    function set (payload) {
-      const {updates} = payload
-      const dbRef = flattenRef(payload)
 
       const {method, value} = updates
       if (dbRef[method]) {
@@ -64,10 +57,10 @@ const middleware = (config) => {
     }
 
     function sub (payload) {
-      const {ref, path, name} = payload
+      const {ref, path, name, updates} = payload
       if (!refs[ref] || refs[ref].length < 1) {
         refs[ref] = [path]
-        addListener(ref, name, updateMethods)
+        addListener(ref, name, updates)
       } else {
         if (refs[ref].indexOf(path) === -1) {
           refs[ref].push(path)
@@ -92,8 +85,8 @@ const middleware = (config) => {
       dbref.off('value')
     }
 
-    function addListener (ref, name, methods) {
-      var dbref = db.ref(ref).
+    function addListener (ref, name, updates) {
+      var dbref = updates ? set({ref, updates}) : db.ref(ref)
       dbref.on('value', (snap) => dispatch(invalidate({ref, name, value: snap.val()})))
     }
   }

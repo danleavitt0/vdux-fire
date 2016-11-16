@@ -1,7 +1,7 @@
 {
   "presets": ["es2015", "stage-2"],
   "plugins": [
-    "transform-runtime",
+    ["transform-runtime", {"polyfill": false, "regenerator": true}],
     ["transform-react-jsx", {"pragma": "element"}]
   ]
 }

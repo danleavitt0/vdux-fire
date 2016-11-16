@@ -4,6 +4,7 @@ import element from 'vdux/element'
 import reducer from './reducer'
 import map from '@f/map-obj'
 import equalObj from '@f/equal-obj'
+import deepEqual from '@f/deep-equal'
 import {subscribe, unsubscribe} from './actions'
 import {mapNewState} from './reducer'
 
@@ -34,7 +35,7 @@ function connect (fn) {
       },
 
       onUpdate (prev, next) {
-        if (!equalObj(fn(prev.props), fn(next.props))) {
+        if (!deepEqual(fn(prev.props), fn(next.props))) {
           return [
             unsubscribeAll(next.path, fn(next.props)),
             next.state.actions.update(next.props),
@@ -63,8 +64,11 @@ function connect (fn) {
 }
 
 function * subscribeAll (path, refs) {
-  for (let ref in refs) {
-    yield subscribe({path, ref: refs[ref], name: ref})
+  for (let key in refs) {
+    const ref = refs[key]
+    typeof (ref) === 'string'
+      ? yield subscribe({path, ref, name: ref})
+      : yield subscribe({path, ref: ref.ref, name: key, updates: ref.updates})
   }
 }
 
