@@ -9,85 +9,93 @@ import {subscribe, unsubscribe, invalidate, update, refMethod, once} from './act
 let refs = []
 let db
 
-const middleware = (config) => ({dispatch, getState}) => {
+const middleware = (config) => { 
+  console.log(config)
   firebase.initializeApp(config)
   db = firebase.database()
-
-  return (next) => (action) => {
-    return Switch({
-      [subscribe.type]: sub,
-      [unsubscribe.type]: unsub,
-      [invalidate.type]: inval,
-      [refMethod.type]: set,
-      [once.type]: onceFn,
-      default: () => next(action)
-    })(action.type, action.payload)
-  }
-
-  function inval (payload) {
-    const {ref, value, name} = payload
-    return map((path) => dispatch(
-			toEphemeral(
-				path,
-				reducer,
-				update({ref, value, name})
-			)),
-			refs[ref]
-		)
-  }
-
-  function set (payload) {
-    const {ref, updates} = payload
-    const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
-    if (Array.isArray(updates)) {
-      return updates.reduce((prev, update) => set({ref: prev || dbRef, updates: update}), undefined)
+  return ({dispatch, getState}) => {
+    return (next) => (action) => {
+      return Switch({
+        [subscribe.type]: sub,
+        [unsubscribe.type]: unsub,
+        [invalidate.type]: inval,
+        [refMethod.type]: set,
+        [once.type]: onceFn,
+        default: () => next(action)
+      })(action.type, action.payload)
     }
 
-    const {method, value} = updates
-    if (dbRef[method]) {
-      return value ? dbRef[method](value) : dbRef[method]()
-    } else {
-      throw new Error('Not a valid firebase method')
+    function inval (payload) {
+      const {ref, value, name} = payload
+      return map((path) => dispatch(
+  			toEphemeral(
+  				path,
+  				reducer,
+  				update({ref, value, name})
+  			)),
+  			refs[ref]
+  		)
     }
-  }
 
-  function onceFn (payload) {
-    const {ref, listener = 'value'} = payload
-    return db.ref(ref).once(listener)
-  }
+    function flattenRef (payload) {
+      const {ref, updates} = payload
+      const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
+      if (Array.isArray(updates)) {
+        return updates.reduce((prev, update) => flattenRef({ref: prev || dbRef, updates: update}), undefined)
+      }
+      return dbRef
+    }
 
-  function sub (payload) {
-    const {ref, path, name} = payload
-    if (!refs[ref] || refs[ref].length < 1) {
-      refs[ref] = [path]
-      addListener(ref, name)
-    } else {
-      if (refs[ref].indexOf(path) === -1) {
-        refs[ref].push(path)
+    function set (payload) {
+      const {updates} = payload
+      const dbRef = flattenRef(payload)
+
+      const {method, value} = updates
+      if (dbRef[method]) {
+        return value ? dbRef[method](value) : dbRef[method]()
+      } else {
+        throw new Error('Not a valid firebase method')
       }
     }
-  }
 
-  function unsub (path) {
-    for (var ref in refs) {
-      const idx = refs[ref].indexOf(path)
-      if (idx !== -1) {
-        refs[ref].splice(idx, 1)
-        if (refs[ref].length < 1) {
-          removeListener(ref)
+    function onceFn (payload) {
+      const {ref, listener = 'value'} = payload
+      return db.ref(ref).once(listener)
+    }
+
+    function sub (payload) {
+      const {ref, path, name} = payload
+      if (!refs[ref] || refs[ref].length < 1) {
+        refs[ref] = [path]
+        addListener(ref, name, updateMethods)
+      } else {
+        if (refs[ref].indexOf(path) === -1) {
+          refs[ref].push(path)
         }
       }
     }
-  }
 
-  function removeListener (ref) {
-    var dbref = db.ref(ref)
-    dbref.off('value')
-  }
+    function unsub (path) {
+      for (var ref in refs) {
+        const idx = refs[ref].indexOf(path)
+        if (idx !== -1) {
+          refs[ref].splice(idx, 1)
+          if (refs[ref].length < 1) {
+            removeListener(ref)
+          }
+        }
+      }
+    }
 
-  function addListener (ref, name) {
-    var dbref = db.ref(ref)
-    dbref.on('value', (snap) => dispatch(invalidate({ref, name, value: snap.val()})))
+    function removeListener (ref) {
+      var dbref = db.ref(ref)
+      dbref.off('value')
+    }
+
+    function addListener (ref, name, methods) {
+      var dbref = db.ref(ref).
+      dbref.on('value', (snap) => dispatch(invalidate({ref, name, value: snap.val()})))
+    }
   }
 }
 

@@ -36,8 +36,9 @@
     "@f/map": "^1.5.3",
     "@f/map-obj": "^1.2.2",
     "@f/switch": "^1.0.1",
-    "firebase": "^3.0.3",
+    "firebase": "3.6.0",
     "redux-ephemeral": "^0.3.7",
+    "regenerator-runtime": "^0.9.6",
     "vdux": "^2.4.6"
   },
   "devDependencies": {
