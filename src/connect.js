@@ -67,7 +67,7 @@ function * subscribeAll (path, refs) {
   for (let key in refs) {
     const ref = refs[key]
     typeof (ref) === 'string'
-      ? yield subscribe({path, ref, name: ref})
+      ? yield subscribe({path, ref, name: key})
       : yield subscribe({path, ref: ref.ref, name: key, updates: ref.updates})
   }
 }
