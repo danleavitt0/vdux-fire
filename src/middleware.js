@@ -26,6 +26,7 @@ const middleware = (config) => {
 
     function inval (payload) {
       const {ref, value, name} = payload
+
       return map((path) => dispatch(
   			toEphemeral(
   				path,
@@ -46,6 +47,8 @@ const middleware = (config) => {
       const {method, value} = updates
       if (dbRef[method]) {
         return value ? dbRef[method](value) : dbRef[method]()
+      } else if (method === 'remove') {
+        return dbRef.ref.remove()
       } else {
         throw new Error('Not a valid firebase method')
       }
@@ -68,13 +71,13 @@ const middleware = (config) => {
       }
     }
 
-    function unsub (path) {
-      for (var ref in refs) {
-        const idx = refs[ref].indexOf(path)
+    function unsub ({ref, path}) {
+      for (var key in refs) {
+        const idx = refs[key].indexOf(path)
         if (idx !== -1) {
-          refs[ref].splice(idx, 1)
-          if (refs[ref].length < 1) {
-            removeListener(ref)
+          refs[key].splice(idx, 1)
+          if (refs[key].length < 1) {
+            removeListener(key)
           }
         }
       }
@@ -87,9 +90,23 @@ const middleware = (config) => {
 
     function addListener (ref, name, updates) {
       var dbref = updates ? set({ref, updates}) : db.ref(ref)
-      dbref.on('value', (snap) => dispatch(invalidate({ref, name, value: snap.val()})))
+      dbref.on('value', (snap) => {
+        const value = updates
+          ? orderData(snap)
+          : snap.val()
+        dispatch(invalidate({ref, name, value}))
+      })
     }
   }
+}
+
+function orderData (snap) {
+  let ordered = []
+  snap.forEach((child) => {
+    const val = child.val()
+    ordered.push({...val, key: child.key})
+  })
+  return ordered
 }
 
 export default middleware

@@ -1,10 +1,10 @@
 import {update} from './actions'
+import omit from '@f/omit'
 import createAction from '@f/create-action'
 
 const mapNewState = createAction('MAP_NEW_STATE')
 
 export default function (state, action) {
-  console.log(state)
   switch (action.type) {
     case update.type:
       var {value, name} = action.payload
@@ -21,10 +21,7 @@ export default function (state, action) {
       var {value, name} = action.payload
       return {
         ...state,
-        [name]: {
-          ...state[name],
-          loading: true
-        }
+        ...action.payload
       }
   }
   return state

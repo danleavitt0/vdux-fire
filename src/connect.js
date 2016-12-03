@@ -34,13 +34,11 @@ function connect (fn) {
         return subscribeAll(path, fn(props))
       },
 
-      onUpdate (prev, next) {
+      * onUpdate (prev, next) {
         if (!deepEqual(fn(prev.props), fn(next.props))) {
-          return [
-            unsubscribeAll(next.path, fn(next.props)),
-            next.state.actions.update(next.props),
-            subscribeAll(next.path, fn(next.props))
-          ]
+          yield unsubscribeAll(next.path, fn(next.props))
+          yield next.state.actions.update(next.props)
+          yield subscribeAll(next.path, fn(next.props))
         }
       },
 
@@ -55,7 +53,7 @@ function connect (fn) {
       reducer,
 
       onRemove ({path}) {
-        return unsubscribe(path)
+        return unsubscribe({path})
       }
     }
 
