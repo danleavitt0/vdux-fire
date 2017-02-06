@@ -33,6 +33,7 @@
     "@f/create-action": "^1.1.1",
     "@f/deep-equal": "^1.0.2",
     "@f/equal-obj": "^1.2.1",
+    "@f/filter": "^1.1.1",
     "@f/handle-actions": "^1.1.2",
     "@f/map": "^1.5.3",
     "@f/map-obj": "^1.2.2",

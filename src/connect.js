@@ -3,10 +3,11 @@
 import element from 'vdux/element'
 import reducer from './reducer'
 import map from '@f/map-obj'
-import equalObj from '@f/equal-obj'
+import omit from '@f/omit'
 import deepEqual from '@f/deep-equal'
 import {subscribe, unsubscribe} from './actions'
 import {mapNewState} from './reducer'
+import filter from '@f/filter'
 
 function mapState (obj) {
   return map((url, name) => ({
@@ -25,7 +26,7 @@ function connect (fn) {
         return {
           ...mapState(fn(props)),
           actions: {
-            update: local((props) => mapNewState(mapState(fn(props))))
+            update: local((props) => mapNewState(mapState(props)))
           }
         }
       },
@@ -36,15 +37,23 @@ function connect (fn) {
 
       * onUpdate (prev, next) {
         if (!deepEqual(fn(prev.props), fn(next.props))) {
-          yield unsubscribeAll(next.path, fn(next.props))
-          yield next.state.actions.update(next.props)
-          yield subscribeAll(next.path, fn(next.props))
+          const prevProps = fn(prev.props)
+          const nextProps = fn(next.props)
+          const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)
+          const removeProps = filter((prop, key) => !nextProps[key] || nextProps[key] !== prop, prevProps)
+          if (removeProps) {
+            yield unsubscribeAll(next.path, removeProps)
+          }
+          if (newProps) {
+            yield next.state.actions.update(newProps)
+            yield subscribeAll(next.path, newProps)
+          }
         }
       },
 
       render ({props, state, children}) {
         return (
-          <Ui {...state} {...props}>
+          <Ui {...omit('actions', state)} {...props}>
             {children}
           </Ui>
         )
@@ -64,9 +73,18 @@ function connect (fn) {
 function * subscribeAll (path, refs) {
   for (let key in refs) {
     const ref = refs[key]
-    typeof (ref) === 'string'
-      ? yield subscribe({path, ref, name: key})
-      : yield subscribe({path, ref: ref.ref, name: key, updates: ref.updates})
+    if (ref) {
+      typeof (ref) === 'string'
+        ? yield subscribe({path, ref, name: key})
+        : yield subscribe({
+          path,
+          ref: ref.ref,
+          name: key,
+          updates: ref.updates,
+          size: ref.size,
+          sort: ref.sort
+        })
+    }
   }
 }
 

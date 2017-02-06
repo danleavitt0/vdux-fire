@@ -9,7 +9,7 @@ import {subscribe, unsubscribe, invalidate, update, refMethod, once} from './act
 let refs = []
 let db
 
-const middleware = (config) => { 
+const middleware = (config) => {
   firebase.initializeApp(config)
   db = firebase.database()
   return ({dispatch, getState}) => {
@@ -28,13 +28,13 @@ const middleware = (config) => {
       const {ref, value, name} = payload
 
       return map((path) => dispatch(
-  			toEphemeral(
-  				path,
-  				reducer,
-  				update({ref, value, name})
-  			)),
-  			refs[ref]
-  		)
+				toEphemeral(
+					path,
+					reducer,
+					update({ref, value, name})
+				)),
+				refs[ref]
+			)
     }
 
     function set (payload) {
@@ -43,7 +43,6 @@ const middleware = (config) => {
       if (Array.isArray(updates)) {
         return updates.reduce((prev, update) => set({ref: prev || dbRef, updates: update}), undefined)
       }
-
       const {method, value} = updates
       if (dbRef[method]) {
         return value ? dbRef[method](value) : dbRef[method]()
@@ -60,10 +59,10 @@ const middleware = (config) => {
     }
 
     function sub (payload) {
-      const {ref, path, name, updates} = payload
+      const {ref, path} = payload
       if (!refs[ref] || refs[ref].length < 1) {
         refs[ref] = [path]
-        addListener(ref, name, updates)
+        addListener(payload)
       } else {
         if (refs[ref].indexOf(path) === -1) {
           refs[ref].push(path)
@@ -76,24 +75,24 @@ const middleware = (config) => {
         const idx = refs[key].indexOf(path)
         if (idx !== -1) {
           refs[key].splice(idx, 1)
-          if (refs[key].length < 1) {
-            removeListener(key)
-          }
+					// if (refs[key].length < 1) {
+					//   removeListener(key)
+					// }
         }
       }
     }
 
-    function removeListener (ref) {
-      var dbref = db.ref(ref)
-      dbref.off('value')
-    }
+		// function removeListener (ref) {
+		//   var dbref = db.ref(ref)
+		//   dbref.off('value')
+		// }
 
-    function addListener (ref, name, updates) {
+    function addListener ({ref, name, updates}) {
       var dbref = updates ? set({ref, updates}) : db.ref(ref)
       dbref.on('value', (snap) => {
         const value = updates
-          ? orderData(snap)
-          : snap.val()
+					? orderData(snap)
+					: snap.val()
         dispatch(invalidate({ref, name, value}))
       })
     }
