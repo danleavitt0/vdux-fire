@@ -1,6 +1,7 @@
 /** @jsx element */
 
-import element from 'vdux/element'
+import {component, element} from 'vdux'
+import middleware, {mw} from './middleware'
 import reducer from './reducer'
 import map from '@f/map-obj'
 import omit from '@f/omit'
@@ -21,18 +22,13 @@ function mapState (obj) {
 
 function connect (fn) {
   return function (Ui) {
-    const Component = {
+    const Component = component({
       initialState ({props, state, local}) {
-        return {
-          ...mapState(fn(props)),
-          actions: {
-            update: local((props) => mapNewState(mapState(props)))
-          }
-        }
+        return mapState(fn(props))
       },
 
-      onCreate ({props, state, local, path}) {
-        return subscribeAll(path, fn(props))
+      * onCreate ({props, state, path, actions}) {
+        yield actions.subscribeAll(path, fn(props))
       },
 
       * onUpdate (prev, next) {
@@ -45,8 +41,8 @@ function connect (fn) {
             yield unsubscribeAll(next.path, removeProps)
           }
           if (newProps) {
-            yield next.state.actions.update(newProps)
-            yield subscribeAll(next.path, newProps)
+            yield next.actions.update(mapState(newProps))
+            yield next.actions.subscribeAll(next.path, newProps)
           }
         }
       },
@@ -59,32 +55,62 @@ function connect (fn) {
         )
       },
 
-      reducer,
+      controller: {
+        * subscribeAll ({actions}, path, refs) {
+          for (let key in refs) {
+            const ref = refs[key]
+            if (ref) {
+              typeof (ref) === 'string'
+                ? yield subscribe({path, ref, name: key})
+                : yield subscribe({
+                    path,
+                    ref: ref.ref,
+                    name: key,
+                    updates: ref.updates,
+                    size: ref.size,
+                    sort: ref.sort
+                  })
+              }
+          }
+        }
+      },
+
+      reducer: {
+        update: (state, {value, name, size, sort}) => ({
+          ...state,
+          [name]: {
+            ...state[name],
+            name,
+            loading: false,
+            error: null,
+            value,
+            size,
+            sort
+          } 
+        }),
+        mapNewState: (state, payload) => ({
+          ...state,
+          ...payload
+        }),
+        mergeValue: (state, {name, value}) => ({
+          ...state,
+          [name]: {
+            ...state[name],
+            value: {...state[name.value], ...value}
+          }
+        })
+      },
+
+      middleware: [
+        mw
+      ],
 
       onRemove ({path}) {
         return unsubscribe({path})
       }
-    }
+    })
 
     return Component
-  }
-}
-
-function * subscribeAll (path, refs) {
-  for (let key in refs) {
-    const ref = refs[key]
-    if (ref) {
-      typeof (ref) === 'string'
-        ? yield subscribe({path, ref, name: key})
-        : yield subscribe({
-          path,
-          ref: ref.ref,
-          name: key,
-          updates: ref.updates,
-          size: ref.size,
-          sort: ref.sort
-        })
-    }
   }
 }
 

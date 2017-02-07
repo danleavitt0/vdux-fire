@@ -42,7 +42,7 @@
     "firebase": "3.6.0",
     "redux-ephemeral": "^0.3.7",
     "regenerator-runtime": "^0.9.6",
-    "vdux": "^2.4.6"
+    "vdux": "latest"
   },
   "devDependencies": {
     "babel": "^6.5.2",
