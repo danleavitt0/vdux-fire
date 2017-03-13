@@ -1,13 +1,13 @@
 /** @jsx element */
 
+import {subscribe, unsubscribe} from './actions'
+import deepEqual from '@f/deep-equal'
+import {mapNewState} from './reducer'
 import element from 'vdux/element'
 import reducer from './reducer'
+import filter from '@f/filter'
 import map from '@f/map-obj'
 import omit from '@f/omit'
-import deepEqual from '@f/deep-equal'
-import {subscribe, unsubscribe} from './actions'
-import {mapNewState} from './reducer'
-import filter from '@f/filter'
 
 function mapState (obj) {
   return map((url, name) => ({
@@ -19,14 +19,23 @@ function mapState (obj) {
   }), obj)
 }
 
+function * addSubscribe (obj) {
+  yield mapNewState(obj)
+  yield subscribeAll(obj)
+}
+
 function connect (fn) {
   return function (Ui) {
     const Component = {
-      initialState ({props, state, local}) {
+      initialState ({props, state, local, path}) {
         return {
           ...mapState(fn(props)),
           actions: {
-            update: local((props) => mapNewState(mapState(props)))
+            update: function * (newProp) {
+              const obj = mapState(newProp)
+              yield local(() => mapNewState(obj))
+              yield subscribeAll(obj)
+            }
           }
         }
       },
@@ -36,6 +45,7 @@ function connect (fn) {
       },
 
       * onUpdate (prev, next) {
+        // console.log(prev.state, next.state)
         if (!deepEqual(fn(prev.props), fn(next.props))) {
           const prevProps = fn(prev.props)
           const nextProps = fn(next.props)
@@ -45,7 +55,7 @@ function connect (fn) {
             yield unsubscribeAll(next.path, removeProps)
           }
           if (newProps) {
-            yield next.state.actions.update(newProps)
+            // yield next.state.actions.update(newProps)
             yield subscribeAll(next.path, newProps)
           }
         }
@@ -53,7 +63,7 @@ function connect (fn) {
 
       render ({props, state, children}) {
         return (
-          <Ui {...omit('actions', state)} {...props}>
+          <Ui {...state} {...props}>
             {children}
           </Ui>
         )
@@ -80,6 +90,7 @@ function * subscribeAll (path, refs) {
           path,
           ref: ref.ref,
           name: key,
+          type: ref.type,
           updates: ref.updates,
           size: ref.size,
           sort: ref.sort
