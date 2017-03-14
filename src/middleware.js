@@ -4,7 +4,7 @@ import reducer from './reducer'
 import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
 
-import {subscribe, unsubscribe, invalidate, refMethod, once} from './actions'
+import {subscribe, unsubscribe, invalidate, refMethod, once, update} from './actions'
 
 let refs = []
 let db
@@ -24,6 +24,7 @@ function mw ({dispatch, getState, actions}) {
       [unsubscribe.type]: unsub,
       [invalidate.type]: inval,
       [refMethod.type]: set,
+      [update.type]: fbUpdate,
       [once.type]: onceFn,
       default: () => next(action)
     })(action.type, action.payload)
@@ -40,6 +41,10 @@ function mw ({dispatch, getState, actions}) {
       )),
       refs[ref]
     )
+  }
+
+  function fbUpdate () {
+    
   }
 
   function set (payload) {
@@ -67,12 +72,12 @@ function mw ({dispatch, getState, actions}) {
     const {ref, path} = payload
     if (!refs[ref] || refs[ref].length < 1) {
       refs[ref] = [path]
-      addListener(payload)
     } else {
       if (refs[ref].indexOf(path) === -1) {
         refs[ref].push(path)
       }
     }
+    addListener(payload)
   }
 
   function unsub ({ref, path}) {
