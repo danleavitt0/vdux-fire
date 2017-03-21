@@ -45,7 +45,6 @@ function mw ({dispatch, getState, actions}) {
 
   function inval (payload) {
     const {ref, value, name} = payload
-    console.log(actions)
     return map((path) => dispatch(
       toEphemeral(
         path,
