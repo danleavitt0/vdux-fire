@@ -4,7 +4,17 @@ import reducer from './reducer'
 import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
 
-import {subscribe, unsubscribe, invalidate, refMethod, once, update} from './actions'
+import {
+  subscribe,
+  unsubscribe,
+  invalidate,
+  update,
+  refMethod,
+  transaction,
+  push,
+  once,
+  set
+} from './actions'
 
 let refs = []
 let db
@@ -23,8 +33,11 @@ function mw ({dispatch, getState, actions}) {
       [subscribe.type]: sub,
       [unsubscribe.type]: unsub,
       [invalidate.type]: inval,
-      [refMethod.type]: set,
-      [update.type]: fbUpdate,
+      [refMethod.type]: refMethodHandler,
+      [transaction.type]: transactionHandler,
+      [set.type]: setValue,
+      [update.type]: updateHandler,
+      [push.type]: pushHandler,
       [once.type]: onceFn,
       default: () => next(action)
     })(action.type, action.payload)
@@ -32,7 +45,7 @@ function mw ({dispatch, getState, actions}) {
 
   function inval (payload) {
     const {ref, value, name} = payload
-
+    console.log(actions)
     return map((path) => dispatch(
       toEphemeral(
         path,
@@ -43,15 +56,31 @@ function mw ({dispatch, getState, actions}) {
     )
   }
 
-  function fbUpdate () {
-    
+  function pushHandler (payload) {
+    const {ref, value} = payload
+    return db.ref(ref).push(value)
   }
 
-  function set (payload) {
+  function setValue (payload) {
+    const {ref, value} = payload
+    return db.ref(ref).set(value)
+  }
+
+  function updateHandler (payload) {
+    const {ref, value} = payload
+    return db.ref(ref).update(value)
+  }
+
+  function transactionHandler (payload) {
+    const {ref, value} = payload
+    return db.ref(ref).transaction(value)
+  }
+
+  function refMethodHandler (payload) {
     const {ref, updates} = payload
     const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
     if (Array.isArray(updates)) {
-      return updates.reduce((prev, update) => set({ref: prev || dbRef, updates: update}), undefined)
+      return updates.reduce((prev, update) => refMethodHandler({ref: prev || dbRef, updates: update}), undefined)
     }
     const {method, value} = updates
     if (dbRef[method]) {
@@ -69,7 +98,7 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function sub (payload) {
-    const {ref, path} = payload
+    const {ref, path, type} = payload
     if (!refs[ref] || refs[ref].length < 1) {
       refs[ref] = [path]
     } else {
@@ -97,8 +126,16 @@ function mw ({dispatch, getState, actions}) {
   //   dbref.off('value')
   // }
 
-  function addListener ({ref, name, updates}) {
-    var dbref = updates ? set({ref, updates}) : db.ref(ref)
+  function addListener ({ref, name, updates, type}) {
+    var dbref = updates ? refMethodHandler({ref, updates}) : db.ref(ref)
+    if (type === 'once') {
+      return dbref.once('value', function (snap) {
+        const value = updates
+          ? orderData(snap)
+          : snap.val()
+        dispatch(invalidate({ref, name, value}))
+      })
+    }
     dbref.on('value', (snap) => {
       const value = updates
         ? orderData(snap)
@@ -107,6 +144,8 @@ function mw ({dispatch, getState, actions}) {
     })
   }
 }
+
+
 
 function orderData (snap) {
   let ordered = []

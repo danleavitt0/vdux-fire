@@ -49,7 +49,7 @@ function connect (fn) {
 
       render ({props, state, children}) {
         return (
-          <Ui {...omit('actions', state)} {...props}>
+          <Ui {...props} {...state}>
             {children}
           </Ui>
         )
@@ -66,6 +66,7 @@ function connect (fn) {
                     path,
                     ref: ref.ref,
                     name: key,
+                    type: ref.type,
                     updates: ref.updates,
                     size: ref.size,
                     sort: ref.sort
@@ -77,7 +78,6 @@ function connect (fn) {
 
       reducer: {
         update: (state, {value, name, size, sort}) => ({
-          ...state,
           [name]: {
             ...state[name],
             name,
