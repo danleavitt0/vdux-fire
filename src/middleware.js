@@ -125,16 +125,19 @@ function mw ({dispatch, getState, actions}) {
   //   dbref.off('value')
   // }
 
-  function addListener ({ref, name, updates, type}) {
+  function addListener ({ref, name, updates, type, join}) {
     var dbref = updates ? refMethodHandler({ref, updates}) : db.ref(ref)
     if (type === 'once') {
-      return dbref.once('value', function (snap) {
-        const value = updates
-          ? orderData(snap)
-          : snap.val()
-        dispatch(invalidate({ref, name, value}))
-      })
+      return dbref.once('value')
+        .then((snap) => snap.val())
+        .then((value) => join
+          ? db.ref(join.ref).child(value[join.child]).child(join.childParam).once('value')
+              .then((snap) => snap.val())
+              .then((populateVal) => dispatch(invalidate({ref, name, value: {...value, [join.child]: populateVal}})))
+          : dispatch(invalidate({ref, name, value: value}))
+        )
     }
+
     dbref.on('value', (snap) => {
       const value = updates
         ? orderData(snap)

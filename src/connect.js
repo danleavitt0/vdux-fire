@@ -69,7 +69,8 @@ function connect (fn) {
                     type: ref.type,
                     updates: ref.updates,
                     size: ref.size,
-                    sort: ref.sort
+                    sort: ref.sort,
+                    join: ref.join
                   })
               }
           }
