@@ -133,7 +133,7 @@ function mw ({dispatch, getState, actions}) {
         .then((snap) => updates ? orderData(snap) : snap.val())
         .then((value) => {
           return join
-            ? joinResults(value)
+            ? joinResults(value, 'once')
             : value
         })
         .then(value => dispatch(invalidate({ref, name, value})))
@@ -145,14 +145,15 @@ function mw ({dispatch, getState, actions}) {
         ? orderData(snap)
         : snap.val()
       const p = join
-        ? joinResults(value)
+        ? joinResults(value, 'on')
         : Promise.resolve(value)
       p.then(value => dispatch(invalidate({ref, name, value})))
       
     })
 
-    function joinResults (value) {
+    function joinResults (value, listener) {
       return buildChildRef(value, db.ref(join.ref), join)
+        .then((refs) => Promise.all(toPromise(refs, listener)))
         .then((snap) => Array.isArray(snap) ? mapValues(s => s.val(), snap) : snap.val())
         .then((populateVal) => Array.isArray(value)
             ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
@@ -168,6 +169,16 @@ function buildChildRef (value, ref, join) {
     : ref.child(join.childRef)
 }
 
+function toPromise (ref, listener) {
+  const refs = typeof ref === 'object'
+    ? ref
+    : [ref]
+  return mapValues(r => {
+    return listener === 'on'
+      ? new Promise((resolve, reject) => r.on('value', (snap) => resolve(snap)))
+      : r.once('value')
+  }, refs)
+}
 
 function orderData (snap) {
   let ordered = []

@@ -63,14 +63,9 @@ function connect (fn) {
               typeof (ref) === 'string'
                 ? yield subscribe({path, ref, name: key})
                 : yield subscribe({
+                    ...ref
                     path,
-                    ref: ref.ref,
-                    name: key,
-                    type: ref.type,
-                    updates: ref.updates,
-                    size: ref.size,
-                    sort: ref.sort,
-                    join: ref.join
+                    ref: ref.ref
                   })
               }
           }
