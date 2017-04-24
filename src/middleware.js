@@ -3,6 +3,7 @@ import map from '@f/map'
 import reducer from './reducer'
 import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
+import mapValues from '@f/map-values'
 
 import {
   subscribe,
@@ -129,24 +130,43 @@ function mw ({dispatch, getState, actions}) {
     var dbref = updates ? refMethodHandler({ref, updates}) : db.ref(ref)
     if (type === 'once') {
       return dbref.once('value')
-        .then((snap) => snap.val())
-        .then((value) => join
-          ? db.ref(join.ref).child(value[join.child]).child(join.childParam).once('value')
-              .then((snap) => snap.val())
-              .then((populateVal) => dispatch(invalidate({ref, name, value: {...value, [join.child]: populateVal}})))
-          : dispatch(invalidate({ref, name, value: value}))
-        )
+        .then((snap) => updates ? orderData(snap) : snap.val())
+        .then((value) => {
+          return join
+            ? joinResults(value)
+            : value
+        })
+        .then(value => dispatch(invalidate({ref, name, value})))
+        .catch(e => console.warn(e))
     }
 
     dbref.on('value', (snap) => {
       const value = updates
         ? orderData(snap)
         : snap.val()
-      dispatch(invalidate({ref, name, value}))
+      const p = join
+        ? joinResults(value)
+        : Promise.resolve(value)
+      p.then(value => dispatch(invalidate({ref, name, value})))
+      
     })
+
+    function joinResults (value) {
+      return buildChildRef(value, db.ref(join.ref), join)
+        .then((snap) => Array.isArray(snap) ? mapValues(s => s.val(), snap) : snap.val())
+        .then((populateVal) => Array.isArray(value)
+            ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
+            : {...value, [join.child]: populateVal}
+        )
+    }
   }
 }
 
+function buildChildRef (value, ref, join) {
+  return typeof join.childRef === 'function'
+    ? join.childRef(value, db.ref(join.ref))
+    : ref.child(join.childRef)
+}
 
 
 function orderData (snap) {

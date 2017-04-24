@@ -32,7 +32,7 @@ function connect (fn) {
       },
 
       * onUpdate (prev, next) {
-        if (!deepEqual(fn(prev.props), fn(next.props))) {
+        if (!deepEqual(prev.props, next.props)) {
           const prevProps = fn(prev.props)
           const nextProps = fn(next.props)
           const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)

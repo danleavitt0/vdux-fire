@@ -37,6 +37,7 @@
     "@f/handle-actions": "^1.1.2",
     "@f/map": "^1.5.3",
     "@f/map-obj": "^1.2.2",
+    "@f/map-values": "^1.0.0",
     "@f/omit": "^2.2.3",
     "@f/switch": "^1.0.1",
     "firebase": "3.6.0",

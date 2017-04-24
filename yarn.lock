@@ -329,6 +329,10 @@
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/@f/map-obj/-/map-obj-1.2.2.tgz#d9a9f8bd76caa2ae11b633dda24d9c6cccc1e60d"
 
+"@f/map-values@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@f/map-values/-/map-values-1.0.0.tgz#ca5f4329047504f03a3dd08827bec87e0deaeabb"
+
 "@f/map@^1.5.2", "@f/map@^1.5.3":
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/@f/map/-/map-1.5.3.tgz#952947a4fb06d86cf4c55667c38186f43896d757"
