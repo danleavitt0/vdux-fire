@@ -175,7 +175,7 @@ function toPromise (ref, listener) {
     : [ref]
   return mapValues(r => {
     return listener === 'on'
-      ? new Promise((resolve, reject) => r.on('value', (snap) => resolve(snap)))
+      ? new Promise((resolve, reject) => r.on('value', resolve))
       : r.once('value')
   }, refs)
 }
