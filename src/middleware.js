@@ -171,7 +171,7 @@ function buildChildRef (value, ref, join) {
   if (!join.childRef) {
     return Promise.resolve(ref.child(join.child))
   }
-  return typeof join.childRef === 'function')
+  return typeof join.childRef === 'function'
     ? Promise.resolve(join.childRef(value, db.ref(join.ref)))
     : Promise.resolve(ref.child(join.childRef || join.child))
 }
