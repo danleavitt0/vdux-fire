@@ -1,9 +1,10 @@
-import firebase from 'firebase'
-import map from '@f/map'
-import reducer from './reducer'
-import Switch from '@f/switch'
 import {toEphemeral} from 'redux-ephemeral'
 import mapValues from '@f/map-values'
+import isPromise from '@f/is-promise'
+import firebase from 'firebase'
+import reducer from './reducer'
+import Switch from '@f/switch'
+import map from '@f/map'
 
 import {
   subscribe,
@@ -152,21 +153,27 @@ function mw ({dispatch, getState, actions}) {
     })
 
     function joinResults (value, listener) {
+      if (!join.child) {
+        throw new Error('join must have a child key')
+      }
       return buildChildRef(value, db.ref(join.ref), join)
         .then((refs) => Promise.all(toPromise(refs, listener)))
         .then((snap) => Array.isArray(snap) ? mapValues(s => s.val(), snap) : snap.val())
         .then((populateVal) => Array.isArray(value)
-            ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
-            : {...value, [join.child]: populateVal}
+          ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
+          : {...value, [join.child]: populateVal}
         )
     }
   }
 }
 
 function buildChildRef (value, ref, join) {
-  return typeof join.childRef === 'function'
-    ? join.childRef(value, db.ref(join.ref))
-    : ref.child(join.childRef)
+  if (!join.childRef) {
+    return Promise.resolve(ref.child(join.child))
+  }
+  return typeof join.childRef === 'function')
+    ? Promise.resolve(join.childRef(value, db.ref(join.ref)))
+    : Promise.resolve(ref.child(join.childRef || join.child))
 }
 
 function toPromise (ref, listener) {
