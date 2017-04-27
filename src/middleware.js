@@ -94,7 +94,6 @@ function mw ({dispatch, getState, actions}) {
 
   function sub (payload) {
     const {ref, path} = payload
-    console.log(payload)
     const query = ref.ref
       ? stringToQuery(ref.ref)
       : stringToQuery(ref)
@@ -141,7 +140,6 @@ function mw ({dispatch, getState, actions}) {
         .then(value => dispatch(invalidate({ref: url, name, value})))
         .catch(e => console.warn(e))
     }
-    console.log(join)
     dbref.on('value', (snap) => {
       const value = queryParams
         ? orderData(snap)
