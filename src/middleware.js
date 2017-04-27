@@ -35,7 +35,7 @@ function mw ({dispatch, getState, actions}) {
       [subscribe.type]: sub,
       [unsubscribe.type]: unsub,
       [invalidate.type]: inval,
-      [refMethod.type]: refMethodHandler,
+      [refMethod.type]: refBuilder,
       [transaction.type]: transactionHandler,
       [set.type]: setValue,
       [update.type]: updateHandler,
@@ -77,19 +77,13 @@ function mw ({dispatch, getState, actions}) {
     return db.ref(ref).transaction(value)
   }
 
-  function refMethodHandler (payload) {
-    const {ref, updates} = payload
-    const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
-    if (Array.isArray(updates)) {
-      return updates.reduce((prev, update) => refMethodHandler({ref: prev || dbRef, updates: update}), undefined)
-    }
-    const {method, value} = updates
-    if (dbRef[method]) {
-      return value ? dbRef[method](value) : dbRef[method]()
-    } else if (method === 'remove') {
-      return dbRef.ref.remove()
-    } else {
-      throw new Error('Not a valid firebase method')
+  function refBuilder (q) {
+    const {url, queryParams, type} = q
+    const dbRef = db.ref(url)
+    return {
+      ...q,
+      dbref: queryParams ? reduceParams(queryParams, dbRef) : dbRef,
+      type,
     }
   }
 
@@ -99,15 +93,21 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function sub (payload) {
-    const {ref, path, type} = payload
-    if (!refs[ref] || refs[ref].length < 1) {
-      refs[ref] = [path]
+    const {ref, path} = payload
+    const query = ref.ref
+      ? stringToQuery(ref.ref)
+      : stringToQuery(ref)
+    if (!refs[query.url] || refs[query.url].length < 1) {
+      refs[query.url] = [path]
     } else {
-      if (refs[ref].indexOf(path) === -1) {
-        refs[ref].push(path)
+      if (refs[query.url].indexOf(path) === -1) {
+        refs[query.url].push(path)
       }
     }
-    addListener(payload)
+    if (query.url) {
+      addListener({...payload, ...query})
+    }
+    // addListener(payload)
   }
 
   function unsub ({ref, path}) {
@@ -127,28 +127,28 @@ function mw ({dispatch, getState, actions}) {
   //   dbref.off('value')
   // }
 
-  function addListener ({ref, name, updates, type, join}) {
-    var dbref = updates ? refMethodHandler({ref, updates}) : db.ref(ref)
+  function addListener (payload) {
+    const {url, name, dbref, type, queryParams, join} = refBuilder(payload)
     if (type === 'once') {
       return dbref.once('value')
-        .then((snap) => updates ? orderData(snap) : snap.val())
+        .then((snap) => queryParams ? orderData(snap) : snap.val())
         .then((value) => {
           return join
             ? joinResults(value, 'once')
             : value
         })
-        .then(value => dispatch(invalidate({ref, name, value})))
+        .then(value => dispatch(invalidate({ref: url, name, value})))
         .catch(e => console.warn(e))
     }
 
     dbref.on('value', (snap) => {
-      const value = updates
+      const value = queryParams
         ? orderData(snap)
         : snap.val()
       const p = join
         ? joinResults(value, 'on')
         : Promise.resolve(value)
-      p.then(value => dispatch(invalidate({ref, name, value})))
+      p.then(value => dispatch(invalidate({ref: url, name, value})))
       
     })
 
@@ -194,6 +194,42 @@ function orderData (snap) {
     ordered.push({...val, key: child.key})
   })
   return ordered
+}
+
+function reduceParams (queryParams, dbRef) {
+  return queryParams.map(buildQueryParams).reduce((acc, {method, value}) => {
+    if (acc[method]) {
+      return value ? dbRef[method](value) : dbRef[method]()
+    } else if (method === 'remove') {
+      return dbRef.ref.remove()
+    } else {
+      console.warn(`could not process method: ${method}`)
+      return dbRef
+    }
+  }, dbRef)
+}
+
+function stringToQuery (ref) {
+  if (ref.indexOf('#') === -1 && ref.indexOf('[') === -1) return {url: ref}
+  const typeRe = /\[(.*?)\]/gi
+  const type = typeRe.exec(ref)
+  const split = ref.replace(typeRe, '').split('#')
+  return {
+    url: split[0],
+    queryParams: split[1] && split[1].split('&'),
+    type: type ? type[1] : null
+  }
+}
+
+function buildQueryParams (param) {
+  if (typeof param === 'object') return param
+  return param.split('=').reduce((acc, next, i) => {
+    const key = i === 0 ? 'method' : 'value'
+    return {
+      ...acc,
+      [key]: isNaN(next) ? next : Number(next)
+    }
+  }, {})
 }
 
 export {

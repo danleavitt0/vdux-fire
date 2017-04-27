@@ -9,6 +9,7 @@ import deepEqual from '@f/deep-equal'
 import {subscribe, unsubscribe} from './actions'
 import {mapNewState} from './reducer'
 import filter from '@f/filter'
+import mapValues from '@f/map-values'
 
 function mapState (obj) {
   return map((url, name) => ({
@@ -41,7 +42,8 @@ function connect (fn) {
             yield unsubscribeAll(next.path, removeProps)
           }
           if (newProps) {
-            yield next.actions.update(mapState(newProps))
+            const mapped = mapState(newProps)
+            yield mapValues(prop => next.actions.update(prop), mapped)
             yield next.actions.subscribeAll(next.path, newProps)
           }
         }
@@ -63,10 +65,9 @@ function connect (fn) {
               typeof (ref) === 'string'
                 ? yield subscribe({path, ref, name: key})
                 : yield subscribe({
-                    ...ref,
+                    ref,
                     path,
-                    name: key,
-                    ref: ref.ref
+                    name: key
                   })
               }
           }
@@ -74,10 +75,11 @@ function connect (fn) {
       },
 
       reducer: {
-        update: (state, {value, name, size, sort}) => ({
+        update: (state, {value, name, size, sort, url}) => ({
           [name]: {
             ...state[name],
             name,
+            url,
             loading: false,
             error: null,
             value,
