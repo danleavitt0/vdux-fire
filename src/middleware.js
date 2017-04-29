@@ -1,140 +1,125 @@
-import firebase from 'firebase'
-import map from '@f/map'
+/** @jsx element */
+
+import {component, element} from 'vdux'
+import middleware, {mw} from './middleware'
 import reducer from './reducer'
-import Switch from '@f/switch'
-import {toEphemeral} from 'redux-ephemeral'
+import map from '@f/map-obj'
+import omit from '@f/omit'
+import deepEqual from '@f/deep-equal'
+import {subscribe, unsubscribe} from './actions'
+import {mapNewState} from './reducer'
+import filter from '@f/filter'
+import mapValues from '@f/map-values'
 
-import {
-  subscribe,
-  unsubscribe,
-  invalidate,
-  update,
-  refMethod,
-  transaction,
-  once,
-  set
-} from './actions'
+function mapState (obj) {
+  return map((url, name) => ({
+    name,
+    url,
+    loading: true,
+    error: null,
+    value: null
+  }), obj)
+}
 
-let refs = []
-let db
+function connect (fn) {
+  return function (Ui) {
+    const Component = component({
+      initialState ({props, state, local}) {
+        return mapState(fn(props))
+      },
 
-const middleware = (config) => {
-  firebase.initializeApp(config)
-  db = firebase.database()
-  return ({dispatch, getState}) => {
-    return (next) => (action) => {
-      return Switch({
-        [subscribe.type]: sub,
-        [unsubscribe.type]: unsub,
-        [invalidate.type]: inval,
-        [refMethod.type]: refMethodHandler,
-        [transaction.type]: transactionHandler,
-        [set.type]: setValue,
-        [once.type]: onceFn,
-        default: () => next(action)
-      })(action.type, action.payload)
-    }
+      * onCreate ({props, state, path, actions}) {
+        yield actions.subscribeAll(path, fn(props))
+      },
 
-    function inval (payload) {
-      const {ref, value, name} = payload
-
-      return map((path) => dispatch(
-        toEphemeral(
-          path,
-          reducer,
-          update({ref, value, name})
-        )),
-        refs[ref]
-      )
-    }
-
-    function setValue (payload) {
-      const {ref, value} = payload
-      return db.ref(ref).set(value)
-    }
-
-    function transactionHandler (payload) {
-      const {ref, value} = payload
-      return db.ref(ref).transaction(value)
-    }
-
-    function refMethodHandler (payload) {
-      const {ref, updates} = payload
-      const dbRef = typeof ref === 'string' ? db.ref(ref) : ref
-      if (Array.isArray(updates)) {
-        return updates.reduce((prev, update) => refMethodHandler({ref: prev || dbRef, updates: update}), undefined)
-      }
-      const {method, value} = updates
-      if (dbRef[method]) {
-        return value ? dbRef[method](value) : dbRef[method]()
-      } else if (method === 'remove') {
-        return dbRef.ref.remove()
-      } else {
-        throw new Error('Not a valid firebase method')
-      }
-    }
-
-    function onceFn (payload) {
-      const {ref, listener = 'value'} = payload
-      return db.ref(ref).once(listener)
-    }
-
-    function sub (payload) {
-      const {ref, path, type} = payload
-      if (!refs[ref] || refs[ref].length < 1) {
-        refs[ref] = [path]
-      } else {
-        if (refs[ref].indexOf(path) === -1) {
-          refs[ref].push(path)
+      * onUpdate (prev, next) {
+        if (!deepEqual(prev.props, next.props)) {
+          const prevProps = fn(prev.props)
+          const nextProps = fn(next.props)
+          const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)
+          const removeProps = filter((prop, key) => !nextProps[key] || nextProps[key] !== prop, prevProps)
+          if (removeProps) {
+            yield unsubscribeAll(next.path, removeProps)
+          }
+          if (newProps) {
+            const mapped = mapState(newProps)
+            yield mapValues(prop => next.actions.update(prop), mapped)
+            yield next.actions.subscribeAll(next.path, newProps)
+          }
         }
-      }
-      addListener(payload)
-    }
+      },
 
-    function unsub ({ref, path}) {
-      for (var key in refs) {
-        const idx = refs[key].indexOf(path)
-        if (idx !== -1) {
-          refs[key].splice(idx, 1)
-          // if (refs[key].length < 1) {
-          //   removeListener(key)
-          // }
+      render ({props, state, children}) {
+        return (
+          <Ui {...props} {...state}>
+            {children}
+          </Ui>
+        )
+      },
+
+      controller: {
+        * subscribeAll ({actions}, path, refs) {
+          for (let key in refs) {
+            const ref = refs[key]
+            if (ref) {
+              typeof (ref) === 'string'
+                ? yield subscribe({path, ref, name: key})
+                : yield subscribe({
+                    ref,
+                    path,
+                    name: key
+                  })
+              }
+          }
         }
-      }
-    }
+      },
 
-    // function removeListener (ref) {
-    //   var dbref = db.ref(ref)
-    //   dbref.off('value')
-    // }
-
-    function addListener ({ref, name, updates, type}) {
-      var dbref = updates ? refMethodHandler({ref, updates}) : db.ref(ref)
-      if (type === 'once') {
-        return dbref.once('value', function (snap) {
-          const value = updates
-            ? orderData(snap)
-            : snap.val()
-          dispatch(invalidate({ref, name, value}))
+      reducer: {
+        update: (state, {value, name, size, sort, url}) => ({
+          [name]: {
+            ...state[name],
+            name,
+            url,
+            loading: false,
+            error: null,
+            value,
+            size,
+            sort
+          } 
+        }),
+        mapNewState: (state, payload) => ({
+          ...state,
+          ...payload
+        }),
+        mergeValue: (state, {name, value}) => ({
+          ...state,
+          [name]: {
+            ...state[name],
+            value: {...state[name.value], ...value}
+          }
         })
+      },
+
+      middleware: [
+        mw
+      ],
+
+      onRemove ({path}) {
+        return unsubscribe({path})
       }
-      dbref.on('value', (snap) => {
-        const value = updates
-          ? orderData(snap)
-          : snap.val()
-        dispatch(invalidate({ref, name, value}))
-      })
-    }
+    })
+
+    return Component
   }
 }
 
-function orderData (snap) {
-  let ordered = []
-  snap.forEach((child) => {
-    const val = child.val()
-    ordered.push({...val, key: child.key})
-  })
-  return ordered
+function * unsubscribeAll (path, refs) {
+  for (let ref in refs) {
+    yield unsubscribe({path, ref: refs[ref], name: ref})
+  }
 }
 
-export default middleware
+export default connect
+export {
+  reducer
+}

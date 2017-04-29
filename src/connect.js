@@ -1,13 +1,15 @@
 /** @jsx element */
 
-import {subscribe, unsubscribe} from './actions'
-import deepEqual from '@f/deep-equal'
-import {mapNewState} from './reducer'
-import element from 'vdux/element'
+import {component, element} from 'vdux'
+import middleware, {mw} from './middleware'
 import reducer from './reducer'
-import filter from '@f/filter'
 import map from '@f/map-obj'
 import omit from '@f/omit'
+import deepEqual from '@f/deep-equal'
+import {subscribe, unsubscribe} from './actions'
+import {mapNewState} from './reducer'
+import filter from '@f/filter'
+import mapValues from '@f/map-values'
 
 function mapState (obj) {
   return map((url, name) => ({
@@ -19,34 +21,19 @@ function mapState (obj) {
   }), obj)
 }
 
-function * addSubscribe (obj) {
-  yield mapNewState(obj)
-  yield subscribeAll(obj)
-}
-
 function connect (fn) {
   return function (Ui) {
-    const Component = {
-      initialState ({props, state, local, path}) {
-        return {
-          ...mapState(fn(props)),
-          actions: {
-            update: function * (newProp) {
-              const obj = mapState(newProp)
-              yield local(() => mapNewState(obj))
-              yield subscribeAll(obj)
-            }
-          }
-        }
+    const Component = component({
+      initialState ({props, state, local}) {
+        return mapState(fn(props))
       },
 
-      onCreate ({props, state, local, path}) {
-        return subscribeAll(path, fn(props))
+      * onCreate ({props, state, path, actions}) {
+        yield actions.subscribeAll(path, fn(props))
       },
 
       * onUpdate (prev, next) {
-        // console.log(prev.state, next.state)
-        if (!deepEqual(fn(prev.props), fn(next.props))) {
+        if (!deepEqual(prev.props, next.props)) {
           const prevProps = fn(prev.props)
           const nextProps = fn(next.props)
           const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)
@@ -55,47 +42,74 @@ function connect (fn) {
             yield unsubscribeAll(next.path, removeProps)
           }
           if (newProps) {
-            // yield next.state.actions.update(newProps)
-            yield subscribeAll(next.path, newProps)
+            const mapped = mapState(newProps)
+            yield mapValues(prop => next.actions.update(prop), mapped)
+            yield next.actions.subscribeAll(next.path, newProps)
           }
         }
       },
 
       render ({props, state, children}) {
         return (
-          <Ui {...state} {...props}>
+          <Ui {...props} {...state}>
             {children}
           </Ui>
         )
       },
 
-      reducer,
+      controller: {
+        * subscribeAll ({actions}, path, refs) {
+          for (let key in refs) {
+            const ref = refs[key]
+            if (ref) {
+              typeof (ref) === 'string'
+                ? yield subscribe({path, ref, name: key})
+                : yield subscribe({
+                    ref,
+                    path,
+                    name: key
+                  })
+              }
+          }
+        }
+      },
+
+      reducer: {
+        update: (state, {value, name, size, sort, url}) => ({
+          [name]: {
+            ...state[name],
+            name,
+            url,
+            loading: false,
+            error: null,
+            value,
+            size,
+            sort
+          } 
+        }),
+        mapNewState: (state, payload) => ({
+          ...state,
+          ...payload
+        }),
+        mergeValue: (state, {name, value}) => ({
+          ...state,
+          [name]: {
+            ...state[name],
+            value: {...state[name.value], ...value}
+          }
+        })
+      },
+
+      middleware: [
+        mw
+      ],
 
       onRemove ({path}) {
         return unsubscribe({path})
       }
-    }
+    })
 
     return Component
-  }
-}
-
-function * subscribeAll (path, refs) {
-  for (let key in refs) {
-    const ref = refs[key]
-    if (ref) {
-      typeof (ref) === 'string'
-        ? yield subscribe({path, ref, name: key})
-        : yield subscribe({
-          path,
-          ref: ref.ref,
-          name: key,
-          type: ref.type,
-          updates: ref.updates,
-          size: ref.size,
-          sort: ref.sort
-        })
-    }
   }
 }
 

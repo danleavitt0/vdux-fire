@@ -1,6 +1,6 @@
 {
   "name": "vdux-fire",
-  "version": "0.1.18",
+  "version": "1.2.2",
   "description": "vdux firebase container",
   "main": "lib/index.js",
   "scripts": {
@@ -37,12 +37,13 @@
     "@f/handle-actions": "^1.1.2",
     "@f/map": "^1.5.3",
     "@f/map-obj": "^1.2.2",
+    "@f/map-values": "^1.0.0",
     "@f/omit": "^2.2.3",
     "@f/switch": "^1.0.1",
     "firebase": "3.6.0",
     "redux-ephemeral": "^0.3.7",
     "regenerator-runtime": "^0.9.6",
-    "vdux": "^2.4.6"
+    "vdux": "latest"
   },
   "devDependencies": {
     "babel": "^6.5.2",

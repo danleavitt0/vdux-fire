@@ -7,6 +7,7 @@ const subscribe = createAction('vdux-fireSummon: subscribe')
 const refMethod = createAction('vdux-fireSummon: refMethod')
 const update = createAction('vdux-fireSummon: update')
 const once = createAction('vdux-fireSummon: once')
+const push = createAction('vdux-fireSummon: push')
 const set = createAction('vdux-fireSummon: set')
 
 export {
@@ -16,6 +17,7 @@ export {
   transaction,
   update,
   refMethod,
+  push,
   once,
   set
 }
