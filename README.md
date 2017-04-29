@@ -17,6 +17,8 @@ npm install vdux-fire
 vdux-fire is inspired by vdux-summon and [react-refetch](https://github.com/heroku/react-refetch). You can use it to declaratively fetch data for your components and inject it into their props.
 
 ```js
+import fire from 'vdux-fre'
+
 export default fire((props) => ({
   todos: `/users/${props.uid}/todos`
 }))(component({
@@ -28,6 +30,18 @@ export default fire((props) => ({
     )
   }
 }))
+```
+
+### Middleware
+In order to make this work however, you must install the vdux-fire middleware in your root component's middleware stack and pass it your firebase config object:
+
+```js
+import * as vduxFire from 'vdux-fire'
+import config from './firebaseConfig'
+
+component({
+  middleware: [...middleware, vduxFire.middleware(config)]
+})
 ```
 
 ## Descriptor Object
@@ -74,7 +88,7 @@ To help keep your firebase database flat, vdux-fire has a join that can either r
 If childRef is a function it receives the parameters (val, ref):
   - `val` - The value returned by the initial query.
   - `ref` - The firebase ref specified in the ref key of join.
-  **Returns**: Array or Firebase Ref, A single firebase reference or array of firebase references.
+  - **Returns**: Array or Firebase Ref, A single firebase reference or array of firebase references.
 
 Basic example:
 ```js
