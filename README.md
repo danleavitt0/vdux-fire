@@ -74,6 +74,7 @@ To help keep your firebase database flat, vdux-fire has a join that can either r
 If childRef is a function it receives the parameters (val, ref):
   - `val` - The value returned by the initial query.
   - `ref` - The firebase ref specified in the ref key of join.
+  **Returns**: Array or Firebase Ref, A single firebase reference or array of firebase references.
 
 Basic example:
 ```js
