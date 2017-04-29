@@ -29,8 +29,13 @@ function orderData (snap) {
   return ordered
 }
 
-// export default fire((props) => ({
 //
+// export default fire((props) => ({
+//   challenges: {
+//     ref: '/challenges',
+//     size: 30,
+//     sort: (ref) => ref.orderByChild('dateAdded')
+//   }
 // }))({
 //   render
 // })

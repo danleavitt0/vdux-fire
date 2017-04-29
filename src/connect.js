@@ -1,13 +1,11 @@
 /** @jsx element */
 
 import {component, element} from 'vdux'
-import middleware, {mw} from './middleware'
+import {mw} from './middleware'
 import reducer from './reducer'
 import map from '@f/map-obj'
-import omit from '@f/omit'
 import deepEqual from '@f/deep-equal'
 import {subscribe, unsubscribe} from './actions'
-import {mapNewState} from './reducer'
 import filter from '@f/filter'
 import mapValues from '@f/map-values'
 
@@ -85,7 +83,7 @@ function connect (fn) {
             value,
             size,
             sort
-          } 
+          }
         }),
         mapNewState: (state, payload) => ({
           ...state,
