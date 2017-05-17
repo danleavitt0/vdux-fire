@@ -77,11 +77,13 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function refBuilder (q) {
-    const {url, queryParams, type} = q
+    const {url, queryParams = [], type} = q
     const dbRef = db.ref(url)
+    const bindAs = queryParams.filter(p => p.search('bindAs') > -1)[0]
     return {
       ...q,
       type,
+      bindAs: buildQueryParams(bindAs).value,
       dbref: queryParams ? reduceParams(queryParams, dbRef) : dbRef
     }
   }
@@ -96,6 +98,7 @@ function mw ({dispatch, getState, actions}) {
     const query = ref.ref
       ? stringToQuery(ref.ref)
       : stringToQuery(ref)
+
     if (!refs[query.url] || refs[query.url].length < 1) {
       refs[query.url] = [path]
     } else {
@@ -104,7 +107,7 @@ function mw ({dispatch, getState, actions}) {
       }
     }
     if (query.url) {
-      addListener({...payload, ...query, ...ref})
+      addListener({...payload, ...query, ref})
     }
     // addListener(payload)
   }
@@ -127,10 +130,13 @@ function mw ({dispatch, getState, actions}) {
   // }
 
   function addListener (payload) {
-    const {url, name, dbref, type, join} = refBuilder(payload)
+    const {url, name, dbref, type, join, bindAs, queryParams} = refBuilder(payload)
+    const bind = queryParams && bindAs === 'object' || !queryParams
+      ? 'object'
+      : 'array'
     if (type === 'once') {
       return dbref.once('value')
-        .then((snap) => orderData(snap))
+        .then((snap) => orderData(snap, bind))
         .then((value) => {
           return join
             ? joinResults(value, 'once')
@@ -140,7 +146,7 @@ function mw ({dispatch, getState, actions}) {
         .catch(e => console.warn(e))
     }
     dbref.on('value', (snap) => {
-      const value = orderData(snap)
+      const value = orderData(snap, bind)
       const p = join
         ? joinResults(value, 'on')
         : Promise.resolve(value)
@@ -153,7 +159,7 @@ function mw ({dispatch, getState, actions}) {
       }
       return buildChildRef(value, db.ref(join.ref), join)
         .then((refs) => Promise.all(toPromise(refs, listener)))
-        .then((snap) => Array.isArray(snap) ? mapValues(s => orderData(s), snap) : orderData(snap))
+        .then((snap) => Array.isArray(snap) ? mapValues(s => orderData(s, bind), snap) : orderData(snap, bind))
         .then((populateVal) => Array.isArray(value)
           ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
           : {...value, [join.child]: populateVal}
@@ -182,25 +188,27 @@ function toPromise (ref, listener) {
   }, refs)
 }
 
-function orderData (snap) {
+function orderData (snap, bindAs) {
+  if (bindAs === 'object') return snap.val()
   const ordered = []
   snap.forEach((child) => {
     ordered.push({...child.val(), key: child.key})
   })
-  return ordered
+  return ordered.length === 0 ? snap.val() : ordered
 }
 
-function reduceParams (queryParams, dbRef) {
-  return queryParams.map(buildQueryParams).reduce((acc, {method, value}) => {
-    if (acc[method]) {
-      return value ? dbRef[method](value) : dbRef[method]()
-    } else if (method === 'remove') {
-      return dbRef.ref.remove()
-    } else {
-      console.warn(`could not process method: ${method}`)
-      return dbRef
-    }
-  }, dbRef)
+function reduceParams (queryParams = [], dbRef) {
+  return queryParams.map(buildQueryParams).filter(p => p.method !== 'bindAs')
+    .reduce((acc, {method, value}) => {
+      if (acc[method]) {
+        return value ? dbRef[method](value) : dbRef[method]()
+      } else if (method === 'remove') {
+        return dbRef.ref.remove()
+      } else {
+        console.warn(`could not process method: ${method}`)
+        return dbRef
+      }
+    }, dbRef)
 }
 
 function stringToQuery (ref) {
@@ -209,13 +217,14 @@ function stringToQuery (ref) {
   const type = typeRe.exec(ref)
   const split = ref.replace(typeRe, '').split('#')
   return {
-    url: split[0],
     queryParams: split[1] && split[1].split('&'),
-    type: type ? type[1] : null
+    type: type ? type[1] : null,
+    url: split[0]
   }
 }
 
 function buildQueryParams (param) {
+  if (typeof param === 'undefined') return {}
   if (typeof param === 'object') return param
   return param.split('=').reduce((acc, next, i) => {
     const key = i === 0 ? 'method' : 'value'

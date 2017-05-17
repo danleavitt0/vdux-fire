@@ -17,5 +17,5 @@ export {
   update,
   push,
   once,
-  set,
+  set
 }
