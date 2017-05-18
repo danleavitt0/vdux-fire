@@ -74,12 +74,12 @@ function connect (fn) {
       },
 
       reducer: {
-        update: (state, {value, name, size, sort, url}) => ({
+        update: (state, {value, name, size, sort, url, loading}) => ({
           [name]: {
             ...state[name],
             name,
             url,
-            loading: false,
+            loading,
             error: null,
             value,
             size,
