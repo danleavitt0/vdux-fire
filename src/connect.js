@@ -41,7 +41,6 @@ function connect (fn) {
             yield unsubscribeAll(next.path, removeProps)
           }
           if (newProps) {
-            console.log(newProps)
             const mapped = mapState(newProps)
             yield mapValues(prop => next.actions.update(prop), mapped)
             yield next.actions.subscribeAll(next.path, newProps)
