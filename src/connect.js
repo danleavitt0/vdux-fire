@@ -31,7 +31,6 @@ function connect (fn) {
       },
 
       * onUpdate (prev, next) {
-        // console.log(prev.props, next.props)
         if (!deepEqual(prev.props, next.props)) {
           const prevProps = fn(prev.props)
           const nextProps = fn(next.props)

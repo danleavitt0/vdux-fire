@@ -80,9 +80,11 @@ function mw ({dispatch, getState, actions}) {
     const {url, queryParams = [], type} = q
     const dbRef = db.ref(url)
     const bindAs = queryParams.filter(p => p.search('bindAs') > -1)[0]
+
     return {
       ...q,
       type,
+      join: q.ref.join,
       bindAs: buildQueryParams(bindAs).value,
       dbref: queryParams ? reduceParams(queryParams, dbRef) : dbRef
     }
@@ -178,7 +180,7 @@ function buildChildRef (value, ref, join) {
 }
 
 function toPromise (ref, listener) {
-  const refs = typeof ref === 'object'
+  const refs = Array.isArray(ref)
     ? ref
     : [ref]
   return mapValues(r => {
