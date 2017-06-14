@@ -1,5 +1,6 @@
 import {toEphemeral} from 'redux-ephemeral'
 import mapValues from '@f/map-values'
+import isEmpty from 'lodash/isEmpty'
 import firebase from 'firebase'
 import reducer from './reducer'
 import Switch from '@f/switch'
@@ -159,20 +160,28 @@ function mw ({dispatch, getState, actions}) {
       if (!join.child) {
         throw new Error('join must have a child key')
       }
+      if (isEmpty(value)) return Promise.resolve(value)
       return buildChildRef(value, db.ref(join.ref), join)
         .then((refs) => Promise.all(toPromise(refs, listener)))
-        .then((snap) => Array.isArray(snap) ? mapValues(s => orderData(s, bind), snap) : orderData(snap, bind))
+        .then((snap) => Array.isArray(snap)
+          ? mapValues(s => s.val(), snap)
+          : snap.val()
+        )
         .then((populateVal) => Array.isArray(value)
           ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
           : {...value, [join.child]: populateVal}
         )
+        .catch(value)
     }
   }
 }
 
 function buildChildRef (value, ref, join) {
   if (!join.childRef) {
-    return Promise.resolve(ref.child(join.child))
+    if (Array.isArray(value)) {
+      return Promise.resolve(value.map(v => ref.child(v[join.child])))
+    }
+    return Promise.resolve(ref.child(value[join.child]))
   }
   return typeof join.childRef === 'function'
     ? Promise.resolve(join.childRef(value, db.ref(join.ref)))
