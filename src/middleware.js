@@ -46,12 +46,12 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function inval (payload) {
-    const {ref, value, name} = payload
+    const {ref, value, name, error} = payload
     return map((path) => dispatch(
       toEphemeral(
         path,
         reducer,
-        actions.update({ref, value, name})
+        actions.update({ref, value, name, error})
       )),
       refs[ref]
     )
@@ -146,7 +146,7 @@ function mw ({dispatch, getState, actions}) {
             : value
         })
         .then(value => dispatch(invalidate({ref: url, name, value})))
-        .catch(e => console.warn(e))
+        .catch(error => dispatch(invalidate({ref: url, name, error})))
     }
     dbref.on('value', (snap) => {
       const value = orderData(snap, bind)
@@ -154,7 +154,7 @@ function mw ({dispatch, getState, actions}) {
         ? joinResults(value, 'on')
         : Promise.resolve(value)
       p.then(value => dispatch(invalidate({ref: url, name, value})))
-    })
+    }, (error) => dispatch(invalidate({ref: url, name, error})))
 
     function joinResults (value, listener) {
       if (!join.child) {

@@ -73,19 +73,15 @@ function connect (fn) {
       },
 
       reducer: {
-        update: (state, {value, name, size, sort, url, loading}) => ({
-          [name]: {
-            ...state[name],
-            name,
-            url,
-            loading,
-            error: null,
-            value,
-            size,
-            sort
+        update: (state, payload) => ({
+          [payload.name]: {
+            ...state[payload.name],
+            ...payload,
+            loading: false
           }
         }),
         mapNewState: (state, payload) => ({
+          test: console.log('map new state'),
           ...state,
           ...payload
         }),
