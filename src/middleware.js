@@ -116,15 +116,15 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function unsub ({ref, path}) {
-    for (var key in refs) {
-      const idx = refs[key].indexOf(path)
-      if (idx !== -1) {
-        refs[key].splice(idx, 1)
-        // if (refs[key].length < 1) {
-        //   removeListener(key)
-        // }
-      }
-    }
+    // for (var key in refs) {
+    //   const idx = refs[key].indexOf(path)
+    //   if (idx !== -1) {
+    //     refs[key].splice(idx, 1)
+    //     // if (refs[key].length < 1) {
+    //     //   removeListener(key)
+    //     // }
+    //   }
+    // }
   }
 
   // function removeListener (ref) {

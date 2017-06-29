@@ -36,10 +36,10 @@ function connect (fn) {
           const nextProps = fn(next.props)
           const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)
           const removeProps = filter((prop, key) => !nextProps[key] || nextProps[key] !== prop, prevProps)
-          if (removeProps) {
+          if (Object.keys(removeProps).length > 0) {
             yield unsubscribeAll(next.path, removeProps)
           }
-          if (newProps) {
+          if (Object.keys(newProps).length > 0) {
             const mapped = mapState(newProps)
             yield mapValues(prop => next.actions.update(prop), mapped)
             yield next.actions.subscribeAll(next.path, newProps)
@@ -74,6 +74,7 @@ function connect (fn) {
 
       reducer: {
         update: (state, payload) => ({
+          test: console.log(payload),
           [payload.name]: {
             ...state[payload.name],
             ...payload,
@@ -81,7 +82,6 @@ function connect (fn) {
           }
         }),
         mapNewState: (state, payload) => ({
-          test: console.log('map new state'),
           ...state,
           ...payload
         }),
