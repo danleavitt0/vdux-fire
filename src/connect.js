@@ -74,7 +74,6 @@ function connect (fn) {
 
       reducer: {
         update: (state, payload) => ({
-          test: console.log(payload),
           [payload.name]: {
             ...state[payload.name],
             ...payload,
@@ -108,8 +107,17 @@ function connect (fn) {
 }
 
 function * unsubscribeAll (path, refs) {
-  for (let ref in refs) {
-    yield unsubscribe({path, ref: refs[ref], name: ref})
+  for (let key in refs) {
+    const ref = refs[key]
+    if (ref) {
+      typeof (ref) === 'string'
+        ? yield unsubscribe({path, ref, name: key})
+        : yield unsubscribe({
+            ref: ref.ref,
+            name: key,
+            path
+          })
+      }
   }
 }
 
