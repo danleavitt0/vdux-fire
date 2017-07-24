@@ -41,6 +41,7 @@
     "@f/omit": "^2.2.3",
     "@f/switch": "^1.0.1",
     "firebase": "3.6.0",
+    "lodash": "^4.17.4",
     "redux-ephemeral": "^0.3.7",
     "regenerator-runtime": "^0.9.6",
     "vdux": "latest"
