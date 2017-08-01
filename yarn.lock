@@ -447,6 +447,10 @@
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@f/slice/-/slice-1.1.3.tgz#f811c188d2591ffef254ed1631c244d8b4c34e70"
 
+"@f/splice@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@f/splice/-/splice-1.0.0.tgz#93e41a0ed80de6248beaddf299327eeedb596a61"
+
 "@f/stringify-attrs@^1.0.5":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@f/stringify-attrs/-/stringify-attrs-1.0.5.tgz#46419baf12e38ad3b852e51d98cab82cce8e027b"
@@ -520,6 +524,16 @@
     "@f/is-promise" "^1.1.1"
     "@f/obj-to-promise" "^1.2.0"
     "@f/thunk-to-promise" "^1.1.1"
+
+"@f/union@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@f/union/-/union-1.0.0.tgz#8b8cc7e84feebe3b6bfd01415637861a4654de7b"
+  dependencies:
+    "@f/unique" "^1.0.1"
+
+"@f/unique@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@f/unique/-/unique-1.0.1.tgz#e73cec32ee4e1dce3659d719427351bcf2cc6b9e"
 
 "@f/values@^1.2.0":
   version "1.2.0"
@@ -640,7 +654,7 @@ babel-code-frame@^6.16.0:
     esutils "^2.0.2"
     js-tokens "^2.0.0"
 
-babel-core@^6.18.0:
+babel-core@^6.0.14, babel-core@^6.18.0:
   version "6.18.2"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-6.18.2.tgz#d8bb14dd6986fa4f3566a26ceda3964fa0e04e5b"
   dependencies:
@@ -1211,6 +1225,13 @@ babel-types@^6.13.0, babel-types@^6.16.0, babel-types@^6.18.0, babel-types@^6.19
 babel@^6.5.2:
   version "6.5.2"
   resolved "https://registry.yarnpkg.com/babel/-/babel-6.5.2.tgz#59140607438270920047ff56f02b2d8630c2d129"
+
+babelify@^7.3.0:
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/babelify/-/babelify-7.3.0.tgz#aa56aede7067fd7bd549666ee16dc285087e88e5"
+  dependencies:
+    babel-core "^6.0.14"
+    object-assign "^4.0.0"
 
 babylon@^6.11.0:
   version "6.14.1"
@@ -1952,13 +1973,9 @@ lodash-es@^4.2.1:
   version "4.17.2"
   resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.2.tgz#59011b585166e613eb9dd5fc256b2cd1a30f3712"
 
-lodash@^4.17.4:
+lodash@^4.17.4, lodash@^4.2.0, lodash@^4.2.1:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
-
-lodash@^4.2.0, lodash@^4.2.1:
-  version "4.17.2"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.2.tgz#34a3055babe04ce42467b607d700072c7ff6bf42"
 
 loose-envify@^1.0.0, loose-envify@^1.1.0:
   version "1.3.0"
@@ -2074,7 +2091,7 @@ oauth-sign@~0.8.1:
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/oauth-sign/-/oauth-sign-0.8.2.tgz#46a6ab7f0aead8deae9ec0565780b7d4efeb9d43"
 
-object-assign@^4.1.0:
+object-assign@^4.0.0, object-assign@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.0.tgz#7a3b3d0e98063d43f4c03f2e8ae6cd51a86883a0"
 
@@ -2085,6 +2102,10 @@ object-inspect@~1.2.1:
 object-keys@^1.0.8:
   version "1.0.11"
   resolved "https://registry.yarnpkg.com/object-keys/-/object-keys-1.0.11.tgz#c54601778ad560f1142ce0e01bcca8b56d13426d"
+
+object-some@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/object-some/-/object-some-1.0.0.tgz#eb16e430983d1d3ed35cb8de7e26b30442d0f927"
 
 object.omit@^2.0.0:
   version "2.0.1"
@@ -2258,7 +2279,11 @@ regenerate@^1.2.1:
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/regenerate/-/regenerate-1.3.2.tgz#d1941c67bad437e1be76433add5b385f95b19260"
 
-regenerator-runtime@^0.9.5, regenerator-runtime@^0.9.6:
+regenerator-runtime@^0.10.5:
+  version "0.10.5"
+  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.10.5.tgz#336c3efc1220adcedda2c9fab67b5a7955a33658"
+
+regenerator-runtime@^0.9.5:
   version "0.9.6"
   resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.9.6.tgz#d33eb95d0d2001a4be39659707c51b0cb71ce029"
 
@@ -2536,9 +2561,9 @@ v8flags@^2.0.10:
   dependencies:
     user-home "^1.1.1"
 
-vdux@latest:
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/vdux/-/vdux-3.0.6.tgz#684eac49a423e6a30c69f7811643fbfac9c9b969"
+vdux@^3.0.10:
+  version "3.0.10"
+  resolved "https://registry.yarnpkg.com/vdux/-/vdux-3.0.10.tgz#738cc9255ae2de0b668e0f7618bad52a25c8b01f"
   dependencies:
     "@f/debounce" "^1.0.2"
     "@f/domready" "^1.0.2"
@@ -2558,7 +2583,7 @@ vdux@latest:
     redux-multi "^0.1.91"
     redux-thunk "^1.0.3"
     virtex "^0.4.0"
-    virtex-component "^0.5.0"
+    virtex-component "^0.5.5"
     virtex-dom "^0.3.12"
     virtex-element "^0.4.1"
     virtex-string "^0.3.6"
@@ -2569,9 +2594,9 @@ verror@1.3.6:
   dependencies:
     extsprintf "1.0.2"
 
-virtex-component@^0.5.0:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/virtex-component/-/virtex-component-0.5.2.tgz#801d2ef5197c1652bc1f1f33a7b5c232a8b40a31"
+virtex-component@^0.5.5:
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/virtex-component/-/virtex-component-0.5.5.tgz#e2c1c0788efe635ea49e026ac25b6fcd3087dbef"
   dependencies:
     "@f/curry-transparently" "^1.0.0"
     "@f/defaults" "^1.0.1"

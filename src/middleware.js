@@ -7,12 +7,13 @@ import Switch from '@f/switch'
 import map from '@f/map'
 
 import {
-  subscribe,
   unsubscribe,
-  invalidate,
-  update,
-  refMethod,
   transaction,
+  invalidate,
+  subscribe,
+  refMethod,
+  getLast,
+  update,
   push,
   once,
   set
@@ -38,6 +39,7 @@ function mw ({dispatch, getState, actions}) {
       [refMethod.type]: refBuilder,
       [transaction.type]: transactionHandler,
       [set.type]: setValue,
+      [getLast.type]: getLastItem,
       [update.type]: updateHandler,
       [push.type]: pushHandler,
       [once.type]: onceFn,
@@ -46,12 +48,13 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function inval (payload) {
-    const {ref, value, name, error} = payload
+    const {ref, value, name, page, mergeValues, orderBy} = payload
+    const update = mergeValues ? actions.mergeValue : actions.update
     return map((path) => dispatch(
       toEphemeral(
         path,
         reducer,
-        actions.update({ref, value, name, error})
+        update({ref, value, name, page, orderBy})
       )),
       refs[ref]
     )
@@ -78,16 +81,23 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function refBuilder (q) {
-    const {url, queryParams = [], type} = q
+    const {url, queryParams = [], type, pageSize, mergeValues} = q
+    const startAt = queryParams.find(p => p.search('startAt') > -1)
+    const qp = pageSize ? queryParams.concat(`limitToFirst=${startAt ? pageSize + 1 : pageSize}`) : queryParams
     const dbRef = db.ref(url)
     const bindAs = queryParams.filter(p => p.search('bindAs') > -1)[0]
+    const orderBy = queryParams.filter(p => p.search(/orderBy/) > -1)
+
+    if (orderBy.length > 1) throw new Error('vdux-fire error: only one order by method is allowed per query')
 
     return {
       ...q,
       type,
       join: q.ref.join,
       bindAs: buildQueryParams(bindAs).value,
-      dbref: queryParams ? reduceParams(queryParams, dbRef) : dbRef
+      dbref: queryParams ? reduceParams(qp, dbRef) : dbRef,
+      mergeValues: mergeValues || pageSize ? true : false,
+      orderBy: orderBy[0]
     }
   }
 
@@ -96,11 +106,12 @@ function mw ({dispatch, getState, actions}) {
     return db.ref(ref).once(listener)
   }
 
-  function sub (payload) {
+  function buildQuery (payload) {
     const {ref, path} = payload
     const query = ref.ref
-      ? stringToQuery(ref.ref)
+      ? {...ref, ...stringToQuery(ref.ref)}
       : stringToQuery(ref)
+
 
     if (!refs[query.url] || refs[query.url].length < 1) {
       refs[query.url] = [path]
@@ -110,29 +121,22 @@ function mw ({dispatch, getState, actions}) {
       }
     }
     if (query.url) {
-      addListener({...payload, ...query, ref})
+      return {...payload, ...query, ref}
     }
-    // addListener(payload)
+  }
+
+  function sub (payload) {
+    return addListener(buildQuery(payload))
   }
 
   function unsub ({ref, path}) {
-    if (ref && refs[ref]) {
-      const idx = refs[ref].indexOf(path)
+    for (var key in refs) {
+      const idx = refs[key].indexOf(path)
       if (idx !== -1) {
-        refs[ref].splice(idx, 1)
+        refs[key].splice(idx, 1)
         // if (refs[key].length < 1) {
         //   removeListener(key)
         // }
-      }
-    } else {
-      for (var key in refs) {
-        const idx = refs[key].indexOf(path)
-        if (idx !== -1) {
-          refs[key].splice(idx, 1)
-          // if (refs[key].length < 1) {
-          //   removeListener(key)
-          // }
-        }
       }
     }
   }
@@ -142,8 +146,18 @@ function mw ({dispatch, getState, actions}) {
   //   dbref.off('value')
   // }
 
+  function getLastItem (payload) {
+    const builtQuery = buildQuery(payload)
+    const newPayload = {...builtQuery, pageSize: null, queryParams: (builtQuery.queryParams || []).concat('limitToLast=1')}
+    const {dbref, name, orderBy, key} = refBuilder(newPayload)
+    dbref.once('child_added')
+      .then(snap => dispatch(actions.setLastItem({snap, name: key, orderBy})))
+      .catch(console.error)
+  }
+
   function addListener (payload) {
-    const {url, name, dbref, type, join, bindAs, queryParams} = refBuilder(payload)
+    const { url, name, dbref, type, join, pageSize,
+      bindAs, mergeValues, orderBy, queryParams, page } = refBuilder(payload)
     const bind = queryParams && bindAs === 'object' || !queryParams
       ? 'object'
       : 'array'
@@ -155,15 +169,21 @@ function mw ({dispatch, getState, actions}) {
             ? joinResults(value, 'once')
             : value
         })
-        .then(value => dispatch(invalidate({ref: url, name, value})))
+        .then(dispatchResults)
         .catch(error => dispatch(invalidate({ref: url, name, error})))
+    }
+    if (pageSize) {
+      dbref.on('child_added', dispatchMerge)
+      dbref.on('child_removed', (snap) => dispatch(actions.removeKey({name, key: snap.key})))
+      dbref.on('child_changed', (snap, prevSib) => dispatchMerge(snap, prevSib, true))
+      return 
     }
     dbref.on('value', (snap) => {
       const value = orderData(snap, bind)
       const p = join
         ? joinResults(value, 'on')
         : Promise.resolve(value)
-      p.then(value => dispatch(invalidate({ref: url, name, value})))
+      p.then(dispatchResults)
     }, (error) => dispatch(invalidate({ref: url, name, error})))
 
     function joinResults (value, listener) {
@@ -182,6 +202,19 @@ function mw ({dispatch, getState, actions}) {
           : {...value, [join.child]: populateVal}
         )
         .catch(value)
+    }
+
+    function dispatchMerge (snap, prevSib, isEdit) {
+      const value = snap.val()
+      dispatch(actions.mergeValue({name, value, key: snap.key, prevSib, orderBy}))
+    }
+
+    function dispatchResults (value) {
+      dispatch(invalidate({ref: url, name, value, mergeValues, page}))
+      if (pageSize) {
+        const cursor = orderByToKey(orderBy, value[value.length - 1])
+        pageSize && dispatch(actions.setCursor(cursor(orderBy.split('=')[1])))
+      }
     }
   }
 }
@@ -213,7 +246,12 @@ function orderData (snap, bindAs) {
   if (bindAs === 'object') return snap.val()
   const ordered = []
   snap.forEach((child) => {
-    ordered.push({...child.val(), key: child.key})
+    const val = child.val()
+    if (child.hasChildren()) {
+      ordered.push({...val, key: child.key})
+    } else {
+      ordered.push({val, key: child.key})
+    }
   })
   return ordered.length === 0 ? snap.val() : ordered
 }
@@ -222,7 +260,7 @@ function reduceParams (queryParams = [], dbRef) {
   return queryParams.map(buildQueryParams).filter(p => p.method !== 'bindAs')
     .reduce((acc, {method, value}) => {
       if (acc[method]) {
-        return value ? dbRef[method](value) : dbRef[method]()
+        return value ? acc[method](value) : acc[method]()
       } else if (method === 'remove') {
         return dbRef.ref.remove()
       } else {
@@ -234,6 +272,7 @@ function reduceParams (queryParams = [], dbRef) {
 
 function stringToQuery (ref) {
   if (ref.indexOf('#') === -1 && ref.indexOf('[') === -1) return {url: ref}
+  if (typeof ref === 'object') return ref
   const typeRe = /\[(.*?)\]/gi
   const type = typeRe.exec(ref)
   const split = ref.replace(typeRe, '').split('#')
@@ -254,6 +293,15 @@ function buildQueryParams (param) {
       [key]: isNaN(next) ? next : Number(next)
     }
   }, {})
+}
+
+function orderByToKey (sort, val) {
+  const orders = {
+    'orderByKey': () => val.key,
+    'orderByValue': () => val.value,
+    'orderByChild': child => val[child] 
+  }
+  return orders[sort]
 }
 
 export {
