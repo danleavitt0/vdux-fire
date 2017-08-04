@@ -193,14 +193,17 @@ function mw ({dispatch, getState, actions}) {
       }
       if (isEmpty(value)) return Promise.resolve(value)
       return buildChildRef(value, db.ref(join.ref), join)
-        .then((refs) => Promise.all(toPromise(refs, listener)))
+        .then((refs) => Array.isArray(refs) ? Promise.all(toPromise(refs, listener)) : toPromise(refs, listener))
         .then((snap) => Array.isArray(snap)
           ? mapValues(s => ({val: s.val(), key: s.key}), snap)
           : {val: snap.val(), key: snap.key}
         )
         .then((populateVal) => Array.isArray(value)
-          ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
-          : {...value, [join.child]: reduce((acc, {val, key}) => ({...acc, [key]: val}), {}, populateVal)}
+          ? value.map((v, i) => ({...v, [join.child]: populateVal[i].val}))
+          : {...value, [join.child]: Array.isArray(populateVal)
+              ? reduce((acc, {val, key}) => ({...acc, [key]: val}), {}, populateVal)
+              : populateVal.val
+            }
         )
         .catch(value)
     }
@@ -229,18 +232,20 @@ function buildChildRef (value, ref, join) {
   }
   return typeof join.childRef === 'function'
     ? Promise.resolve(join.childRef(value, db.ref(join.ref)))
-    : Promise.resolve(ref.child(join.childRef || join.child))
+    : Promise.resolve(ref.child(value[join.childRef || join.child]))
 }
 
 function toPromise (ref, listener) {
-  const refs = Array.isArray(ref)
-    ? ref
-    : [ref]
-  return mapValues(r => {
+  if (Array.isArray(ref)) {
+    return mapValues(getPromise, ref)
+  } else {
+    return getPromise(ref)
+  }
+  function getPromise (r) {
     return listener === 'on'
       ? new Promise((resolve, reject) => r.on('value', resolve))
       : r.once('value')
-  }, refs)
+  }
 }
 
 function orderData (snap, bindAs) {
