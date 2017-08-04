@@ -4,6 +4,7 @@ import isEmpty from 'lodash/isEmpty'
 import firebase from 'firebase'
 import reducer from './reducer'
 import Switch from '@f/switch'
+import reduce from '@f/reduce'
 import map from '@f/map'
 
 import {
@@ -194,12 +195,12 @@ function mw ({dispatch, getState, actions}) {
       return buildChildRef(value, db.ref(join.ref), join)
         .then((refs) => Promise.all(toPromise(refs, listener)))
         .then((snap) => Array.isArray(snap)
-          ? mapValues(s => s.val(), snap)
-          : snap.val()
+          ? mapValues(s => ({val: s.val(), key: s.key}), snap)
+          : {val: snap.val(), key: snap.key}
         )
         .then((populateVal) => Array.isArray(value)
           ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
-          : {...value, [join.child]: populateVal}
+          : {...value, [join.child]: reduce((acc, {val, key}) => ({...acc, [key]: val}), {}, populateVal)}
         )
         .catch(value)
     }
