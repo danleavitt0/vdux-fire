@@ -51,9 +51,9 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function inval (payload) {
-    const {ref, value, name, page, mergeValues, orderBy} = payload
+    const {ref, value, name, page, mergeValues, orderBy, error} = payload
     const update = mergeValues ? actions.mergeValue : actions.update
-    return dispatch(update({ref, value, name, page, orderBy}))
+    return dispatch(update({ref, value, name, page, orderBy, error}))
   }
 
   function pushHandler (payload) {
@@ -207,7 +207,7 @@ function mw ({dispatch, getState, actions}) {
         //       : populateVal.val
         //     }
         // )
-        .catch(console.warn)
+        .catch(error => dispatch(invalidate({ref: url, name, error})))
     }
 
     function dispatchMerge (snap, prevSib, isEdit) {
@@ -236,7 +236,7 @@ function buildChildRef (value, ref, join) {
     const res = join.childRef(value, db.ref(join.ref))
 
     return typeof res === 'object' && !Array.isArray(res)
-      ? Promise.props(map((val, key) => val.then(v => v).catch(console.warn), res))
+      ? Promise.props(map((val, key) => val.then(v => v).catch(), res))
       : Promise.resolve(res)
     // return typeof res === 'object' ? Promise.props(res) : Promise.resolve(res)
   } else {
