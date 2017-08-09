@@ -43,6 +43,7 @@
     "@f/splice": "^1.0.0",
     "@f/switch": "^1.0.1",
     "@f/union": "^1.0.0",
+    "bluebird": "^3.5.0",
     "firebase": "3.6.0",
     "lodash": "^4.17.4",
     "object-some": "^1.0.0",

@@ -1,10 +1,12 @@
 import {toEphemeral} from 'redux-ephemeral'
 import mapValues from '@f/map-values'
+import isPromise from '@f/is-promise'
 import isEmpty from 'lodash/isEmpty'
 import firebase from 'firebase'
 import reducer from './reducer'
 import Switch from '@f/switch'
 import reduce from '@f/reduce'
+import Promise from 'bluebird'
 import map from '@f/map'
 
 import {
@@ -186,19 +188,26 @@ function mw ({dispatch, getState, actions}) {
       }
       if (isEmpty(value)) return Promise.resolve(value)
       return buildChildRef(value, db.ref(join.ref), join)
-        .then((refs) => Array.isArray(refs) ? Promise.all(toPromise(refs, listener)) : toPromise(refs, listener))
-        .then((snap) => Array.isArray(snap)
-          ? mapValues(s => ({val: s.val(), key: s.key}), snap)
-          : {val: snap.val(), key: snap.key}
-        )
-        .then((populateVal) => Array.isArray(value)
-          ? value.map((v, i) => ({...v, [join.child]: populateVal[i].val}))
+        .then((refs) => Array.isArray(refs) ? Promise.all(toPromise(refs, listener)) : Promise.props(toPromise(refs, listener)))
+        .then(populateVal => Array.isArray(value)
+          ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
           : {...value, [join.child]: Array.isArray(populateVal)
-              ? reduce((acc, {val, key}) => ({...acc, [key]: val}), {}, populateVal)
-              : populateVal.val
+              ? reduce((acc, val) => ({...acc, [val.key]: val}), {}, populateVal)
+              : populateVal
             }
         )
-        .catch(value)
+        // .then((snap) => Array.isArray(snap, console.log(snap))
+        //   ? mapValues(s => ({val: s.val(), key: s.key}), snap)
+        //   : {val: snap.val(), key: snap.key}
+        // )
+        // .then((populateVal) => Array.isArray(value, console.log(value))
+        //   ? value.map((v, i) => ({...v, [join.child]: populateVal[i].val}))
+        //   : {...value, [join.child]: Array.isArray(populateVal)
+        //       ? reduce((acc, {val, key}) => ({...acc, [key]: val}), {}, populateVal)
+        //       : populateVal.val
+        //     }
+        // )
+        .catch(console.warn)
     }
 
     function dispatchMerge (snap, prevSib, isEdit) {
@@ -207,7 +216,6 @@ function mw ({dispatch, getState, actions}) {
     }
 
     function dispatchResults (value) {
-
       dispatch(invalidate({ref: url, name, value, mergeValues, page}))
       if (pageSize) {
         const cursor = orderByToKey(orderBy, value[value.length - 1])
@@ -224,16 +232,27 @@ function buildChildRef (value, ref, join) {
     }
     return Promise.resolve(ref.child(value[join.child]))
   }
-  return typeof join.childRef === 'function'
-    ? Promise.resolve(join.childRef(value, db.ref(join.ref)))
-    : Promise.resolve(ref.child(value[join.childRef || join.child]))
+  if (typeof join.childRef === 'function') {
+    const res = join.childRef(value, db.ref(join.ref))
+
+    return typeof res === 'object' && !Array.isArray(res)
+      ? Promise.props(map((val, key) => val.then(v => v).catch(console.warn), res))
+      : Promise.resolve(res)
+    // return typeof res === 'object' ? Promise.props(res) : Promise.resolve(res)
+  } else {
+    return Promise.resolve(ref.child(value[join.childRef || join.child]))
+  }
 }
+
+
 
 function toPromise (ref, listener) {
   if (Array.isArray(ref)) {
-    return mapValues(getPromise, ref)
+    return mapValues(r => getPromise(r).then(s => ({...s.val(), key: s.key})), ref)
+  } else if (typeof ref === 'object' && !ref.database) {
+    return map((val, key) => val ? getPromise(val).then(s => ({...s.val(), key: s.key})) : val, ref)
   } else {
-    return getPromise(ref)
+    return getPromise(ref).then(s => ({...s.val(), key: s.key}))
   }
   function getPromise (r) {
     return listener === 'on'
