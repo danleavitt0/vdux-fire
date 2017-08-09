@@ -110,6 +110,15 @@
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@f/equal-obj/-/equal-obj-1.2.1.tgz#7f75ea17b5c7be2034bec1079e7efdef3c55aaf1"
 
+"@f/equal@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@f/equal/-/equal-1.0.1.tgz#03761436e81c5737ca9998a2216a300f97531a63"
+  dependencies:
+    "@f/equal-array" "^1.2.2"
+    "@f/equal-obj" "^1.2.1"
+    "@f/is-array" "^1.1.1"
+    "@f/is-object" "^1.1.4"
+
 "@f/event-handler@^1.0.3", "@f/event-handler@^1.0.4":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@f/event-handler/-/event-handler-1.0.4.tgz#4b6e4dbacb0e7d6d33152bcd5aad5cf0e2961aab"

@@ -56,6 +56,7 @@ function connect (fn) {
 
       * onUpdate (prev, next) {
         if (!deepEqual(prev.props, next.props)) {
+          // console.log('update', prev.props, next.props)
           const prevProps = fn(prev.props)
           const nextProps = fn(next.props)
           const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)
@@ -65,7 +66,7 @@ function connect (fn) {
           }
           if (Object.keys(newProps).length > 0) {
             const mapped = mapState(newProps)
-            yield mapValues(prop => next.actions.update(prop), mapped)
+            // yield mapValues(prop => next.actions.update(prop), mapped)
             yield next.actions.subscribeAll(next.path, newProps)
           }
         }

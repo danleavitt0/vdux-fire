@@ -51,14 +51,7 @@ function mw ({dispatch, getState, actions}) {
   function inval (payload) {
     const {ref, value, name, page, mergeValues, orderBy} = payload
     const update = mergeValues ? actions.mergeValue : actions.update
-    return map((path) => dispatch(
-      toEphemeral(
-        path,
-        reducer,
-        update({ref, value, name, page, orderBy})
-      )),
-      refs[ref]
-    )
+    return dispatch(update({ref, value, name, page, orderBy}))
   }
 
   function pushHandler (payload) {
@@ -214,6 +207,7 @@ function mw ({dispatch, getState, actions}) {
     }
 
     function dispatchResults (value) {
+
       dispatch(invalidate({ref: url, name, value, mergeValues, page}))
       if (pageSize) {
         const cursor = orderByToKey(orderBy, value[value.length - 1])
