@@ -57,7 +57,11 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
   },
   list: {
     ref: `/classes`,
-    list: classRefs
+    list: classRefs,
+    join: {
+      ref: '/users',
+      child: 'teacherID'
+    }
   }
 }))(component({
 	render ({props}) {

@@ -107,15 +107,15 @@ function connect (fn) {
             key
           )
         },
-        * subscribe ({state}, path, ref, key, parent) {
-          // console.log(path, ref, key, parent)
+        * subscribe ({state}, path, ref, key, childKey) {
+          console.log(path, ref, key, parent)
           if (ref) {
             typeof (ref) === 'string'
-              ? yield subscribe({path, ref, name: key, parent})
+              ? yield subscribe({path, ref, name: key, childKey})
               : yield subscribe({
                   ref,
                   path,
-                  parent,
+                  childKey,
                   name: key
                 })
             }
@@ -128,13 +128,12 @@ function connect (fn) {
             if (ref.pageSize) {
               yield getLast({path, ref, key})
             }
-            // if (ref.list) {
-            //   for (let leaf in ref.list) {
-            //     console.log('here')
-            //     yield actions.subscribe(path, {...ref, ref: `${ref.ref}/${ref.list[leaf]}`}, ref.list[leaf], key)
-            //   }
-            //   return
-            // }
+            if (ref.list) {
+              for (let leaf in ref.list) {
+                yield actions.subscribe(path, {...ref, ref: `${ref.ref}/${ref.list[leaf]}`}, key, ref.list[leaf])
+              }
+              return
+            }
             yield actions.subscribe(path, ref, key)
           }
         },
@@ -166,13 +165,7 @@ function connect (fn) {
             lastItem: snap.key
           }
         }),
-        update: (state, payload) => ({
-          [payload.name]: {
-            ...state[payload.name],
-            ...payload,
-            loading: false
-          }
-        }),
+        update,
         mapNewState: (state, payload) => ({
           ...state,
           ...payload
@@ -195,6 +188,31 @@ function connect (fn) {
     })
 
     return Component
+  }
+}
+
+function update (state, payload) {
+  if (payload.childKey) {
+    return {
+      ...state,
+      loading: false,
+      [payload.name]: {
+        ...state[payload.name],
+        value: {
+          ...(state[payload.name] || {}).value,
+          [payload.childKey]: {
+            ...payload.value
+          }
+        }
+      }
+    }
+  }
+  return {
+    [payload.name]: {
+      ...state[payload.name],
+      ...payload,
+      loading: false
+    }
   }
 }
 

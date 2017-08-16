@@ -51,9 +51,9 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function inval (payload) {
-    const {ref, value, name, page, mergeValues, orderBy, error} = payload
+    const {ref, value, name, page, mergeValues, orderBy, error, childKey} = payload
     const update = mergeValues ? actions.mergeValue : actions.update
-    return dispatch(update({ref, value, name, page, orderBy, error}))
+    return dispatch(update({ref, value, name, page, orderBy, error, childKey}))
   }
 
   function pushHandler (payload) {
@@ -152,7 +152,7 @@ function mw ({dispatch, getState, actions}) {
   }
 
   function addListener (payload) {
-    const { url, name, dbref, type, join, pageSize,
+    const { url, name, dbref, type, join, pageSize, childKey,
       bindAs, mergeValues, orderBy, queryParams, page } = refBuilder(payload)
     const bind = queryParams && bindAs === 'object' || !queryParams
       ? 'object'
@@ -213,7 +213,7 @@ function mw ({dispatch, getState, actions}) {
     }
 
     function dispatchResults (value) {
-      dispatch(invalidate({ref: url, name, value, mergeValues, page}))
+      dispatch(invalidate({ref: url, name, value, mergeValues, page, childKey}))
       if (pageSize) {
         const cursor = orderByToKey(orderBy, value[value.length - 1])
         pageSize && dispatch(actions.setCursor(cursor(orderBy.split('=')[1])))
