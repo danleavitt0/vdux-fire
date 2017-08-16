@@ -3,7 +3,7 @@ import mapValues from '@f/map-values'
 import map from '@f/map'
 import fire from '..'
 
-export default fire(({classRef, playlistRef, uid}) => ({
+export default fire(({classRef, playlistRef, uid, classRefs}) => ({
  activity: {
    ref: `/classes/${classRef}`,
    join: {
@@ -44,6 +44,17 @@ export default fire(({classRef, playlistRef, uid}) => ({
 			childRef: (val, ref) => val.map(v => ref.child(v.key))
 		}
 	},
+  doubleJoin: {
+    ref: `/classes/${classRef}`,
+    join: [{
+      ref: `/users`,
+      child: `students`,
+      childRef: (val, ref) => map((v, key) => ref.child(key), val.students),
+    }, {
+      ref: '/users',
+      child: 'teacherID'
+    }]
+  }
 }))(component({
 	render ({props}) {
 		const {activity, myProgress, inProgress} = props

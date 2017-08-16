@@ -55,7 +55,7 @@ export default component({
   },
 
   render ({props, state}) {
-    return <App uid='A7rojVypFFNCYQb2A22wM189HWL2' classRef='-Kqk0NoS5lywwzissGvg' playlistRef='-Ke7eny8WMLluXLz3Ii5' {...state} {...props} />
+    return <App uid='A7rojVypFFNCYQb2A22wM189HWL2' classRef='-KrYhjpc_dLMXJ8-tMId' playlistRef='-Ke7eny8WMLluXLz3Ii5' {...state} {...props} />
   },
 
   onUpdate (prev, next) {

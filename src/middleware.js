@@ -177,12 +177,12 @@ function mw ({dispatch, getState, actions}) {
     dbref.on('value', (snap) => {
       const value = orderData(snap, bind)
       const p = join
-        ? joinResults(value, 'on')
+        ? Promise.all(mapValues((j) => joinResults(value, j, 'on'), [].concat(join))).then(vals => vals.reduce((acc, val) => ({...acc, ...val})))
         : Promise.resolve(value)
       p.then(dispatchResults)
     }, (error) => dispatch(invalidate({ref: url, name, error})))
 
-    function joinResults (value, listener) {
+    function joinResults (value, join, listener) {
       if (!join.child) {
         throw new Error('join must have a child key')
       }
@@ -196,17 +196,6 @@ function mw ({dispatch, getState, actions}) {
               : populateVal
             }
         )
-        // .then((snap) => Array.isArray(snap, console.log(snap))
-        //   ? mapValues(s => ({val: s.val(), key: s.key}), snap)
-        //   : {val: snap.val(), key: snap.key}
-        // )
-        // .then((populateVal) => Array.isArray(value, console.log(value))
-        //   ? value.map((v, i) => ({...v, [join.child]: populateVal[i].val}))
-        //   : {...value, [join.child]: Array.isArray(populateVal)
-        //       ? reduce((acc, {val, key}) => ({...acc, [key]: val}), {}, populateVal)
-        //       : populateVal.val
-        //     }
-        // )
         .catch(error => dispatch(invalidate({ref: url, name, error})))
     }
 
@@ -234,14 +223,17 @@ function buildChildRef (value, ref, join) {
   }
   if (typeof join.childRef === 'function') {
     const res = join.childRef(value, db.ref(join.ref))
-
     return typeof res === 'object' && !Array.isArray(res)
-      ? Promise.props(map((val, key) => val.then(v => v).catch(), res))
+      ? Promise.props(map((val, key) => val.then(v => v).catch(() => {}), promisify(res)))
       : Promise.resolve(res)
     // return typeof res === 'object' ? Promise.props(res) : Promise.resolve(res)
   } else {
     return Promise.resolve(ref.child(value[join.childRef || join.child]))
   }
+}
+
+function promisify (data) {
+  return map(val => isPromise(val) ? val : Promise.resolve(val), data)
 }
 
 
