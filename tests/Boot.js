@@ -18,6 +18,16 @@ import map from '@f/map'
  * Constants
  */
 
+const classes = [
+  '-KqVQxFjnKZkq9krvKTl',
+  '-KqVSs8SeJdW5UiDzYKx',
+  '-KqVTodanAnufQS2TseH',
+  '-KqVUhnwTrmcQk_DguOE',
+  '-KqVZu27_KqRwec1hIPO',
+  '-KqZLr-0801Qwql8Xcbw',
+  '-KqZUemnM6RTvu10W4X6'
+ ]
+
 const apiServer = process.env.API_SERVER
 const firebaseConfig = {
 	"apiKey": "AIzaSyAQ7YJxZruXp5RhMetYq1idFJ8-y0svN-s",
@@ -55,7 +65,13 @@ export default component({
   },
 
   render ({props, state}) {
-    return <App uid='A7rojVypFFNCYQb2A22wM189HWL2' classRef='-KrYhjpc_dLMXJ8-tMId' playlistRef='-Ke7eny8WMLluXLz3Ii5' {...state} {...props} />
+    return <App
+      classRefs={classes}
+      uid='A7rojVypFFNCYQb2A22wM189HWL2'
+      classRef='-KrYhjpc_dLMXJ8-tMId'
+      playlistRef='-Ke7eny8WMLluXLz3Ii5'
+      {...state}
+      {...props} />
   },
 
   onUpdate (prev, next) {

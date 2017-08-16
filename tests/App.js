@@ -36,7 +36,7 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
       // }
     }
   },
-  inProgress: {
+  inProgress: false && {
 		ref: `/playlistsByUser/${uid}/inProgress#orderByChild=lastEdited`,
 		join: {
 			ref: '/playlistInstances',
@@ -54,6 +54,10 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
       ref: '/users',
       child: 'teacherID'
     }]
+  },
+  list: {
+    ref: `/classes`,
+    list: classRefs
   }
 }))(component({
 	render ({props}) {

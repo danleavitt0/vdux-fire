@@ -121,9 +121,16 @@ function connect (fn) {
         * subscribeAll ({actions}, path, refs) {
           for (let key in refs) {
             const ref = refs[key]
+            if (!ref) return
+
             if (ref.pageSize) {
               yield getLast({path, ref, key})
             }
+            // if (ref.list) {
+            //   return yield actions.subscribeAll(path, ref.list.reduce((acc, next,) => ({...acc, [key]: , {})
+
+            //     ref.list.map(leaf => ({...ref, ref: `${ref.ref}/${leaf}`, key: null})), key)
+            // }
             yield actions.subscribe(path, ref, key)
           }
         },
