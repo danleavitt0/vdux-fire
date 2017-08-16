@@ -44,7 +44,7 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
 			childRef: (val, ref) => val.map(v => ref.child(v.key))
 		}
 	},
-  doubleJoin: {
+  doubleJoin: false && {
     ref: `/classes/${classRef}`,
     join: [{
       ref: `/users`,

@@ -16,7 +16,7 @@ import union from '@f/union'
 const orderParams = /orderByValue|orderByChild|orderByKey/gi
 
 function mapState (obj) {
-  return map((url, name) => ({
+  return map((url = {}, name) => ({
     name,
     url,
     pageSize: url.pageSize,
@@ -108,7 +108,6 @@ function connect (fn) {
           )
         },
         * subscribe ({state}, path, ref, key, childKey) {
-          console.log(path, ref, key, parent)
           if (ref) {
             typeof (ref) === 'string'
               ? yield subscribe({path, ref, name: key, childKey})
