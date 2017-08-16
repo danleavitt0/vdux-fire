@@ -176,8 +176,16 @@ function mw ({dispatch, getState, actions}) {
     }
     dbref.on('value', (snap) => {
       const value = orderData(snap, bind)
+      const arrJoin = [].concat(join)
       const p = join
-        ? Promise.all(mapValues((j) => joinResults(value, j, 'on'), [].concat(join))).then(vals => vals.reduce((acc, val) => ({...acc, ...val})))
+        ? Promise.all(mapValues((j) => joinResults(value, j, 'on'), arrJoin))
+            .then(vals => Array.isArray(join)
+              ? vals.reduce((acc, val, key) => ({
+                ...acc,
+                [arrJoin[key].child]: val[arrJoin[key].child]
+              }), value)
+              : vals[0]
+            )
         : Promise.resolve(value)
       p.then(dispatchResults)
     }, (error) => dispatch(invalidate({ref: url, name, error})))

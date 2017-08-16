@@ -59,6 +59,7 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
 	render ({props}) {
 		const {activity, myProgress, inProgress} = props
 		if (activity.loading) return <span/>
+    console.log(props)
 		return (
 			<div> Hello World </div>
 		)
