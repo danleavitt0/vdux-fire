@@ -46,7 +46,7 @@ function connect (fn) {
 
       * onCreate ({props, state, path, actions, context}) {
         const mapping = fn(props, context)
-        if (objSome(mapping, (val, key) => {
+        if (objSome(mapping, (val = {}, key) => {
           return val.pageSize && !(val.queryParams && val.queryParams.find(v => v.search(orderParams) > -1))
         })) {
           throw new Error('vdux-fire error: pageSize requires an orderBy queryParam')
