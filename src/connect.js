@@ -107,13 +107,15 @@ function connect (fn) {
             key
           )
         },
-        * subscribe ({state}, path, ref, key) {
+        * subscribe ({state}, path, ref, key, parent) {
+          // console.log(path, ref, key, parent)
           if (ref) {
             typeof (ref) === 'string'
-              ? yield subscribe({path, ref, name: key})
+              ? yield subscribe({path, ref, name: key, parent})
               : yield subscribe({
                   ref,
                   path,
+                  parent,
                   name: key
                 })
             }
@@ -121,15 +123,17 @@ function connect (fn) {
         * subscribeAll ({actions}, path, refs) {
           for (let key in refs) {
             const ref = refs[key]
-            if (!ref) return
+            if (!ref) continue
 
             if (ref.pageSize) {
               yield getLast({path, ref, key})
             }
             // if (ref.list) {
-            //   return yield actions.subscribeAll(path, ref.list.reduce((acc, next,) => ({...acc, [key]: , {})
-
-            //     ref.list.map(leaf => ({...ref, ref: `${ref.ref}/${leaf}`, key: null})), key)
+            //   for (let leaf in ref.list) {
+            //     console.log('here')
+            //     yield actions.subscribe(path, {...ref, ref: `${ref.ref}/${ref.list[leaf]}`}, ref.list[leaf], key)
+            //   }
+            //   return
             // }
             yield actions.subscribe(path, ref, key)
           }
