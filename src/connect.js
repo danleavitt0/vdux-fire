@@ -194,9 +194,9 @@ function update (state, payload) {
   if (payload.childKey) {
     return {
       ...state,
-      loading: false,
       [payload.name]: {
         ...state[payload.name],
+        loading: false,
         value: {
           ...(state[payload.name] || {}).value,
           [payload.childKey]: {
