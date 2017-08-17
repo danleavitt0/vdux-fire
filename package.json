@@ -1,6 +1,6 @@
 {
   "name": "vdux-fire",
-  "version": "1.2.24",
+  "version": "1.2.25",
   "description": "vdux firebase container",
   "main": "lib/index.js",
   "scripts": {
