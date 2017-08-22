@@ -122,7 +122,7 @@ function connect (fn) {
         * subscribeAll ({actions}, path, refs) {
           for (let key in refs) {
             const ref = refs[key]
-            if (!ref || (ref.list && ref.list.lenght === 0)) {
+            if (!ref || (ref.list && ref.list.length === 0)) {
               yield actions.update({name: key})
               continue
             }
