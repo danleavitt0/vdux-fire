@@ -28,6 +28,15 @@ const classes = [
   '-KqZUemnM6RTvu10W4X6'
  ]
 
+const schools = [
+  '-Ks5Rx7qPFrRoih0rHJH',
+  '-Ks5S4pkSqozmPsnmg-n',
+  '-Ks5S8YJER3kstWO10_k',
+  '-Ks5SPPCS471yZUBrtiQ',
+  '-Ks5dEE7c9snbnla5-fq',
+  '-Ks63ksRbBTwGchN3hS5'
+]
+
 const apiServer = process.env.API_SERVER
 const firebaseConfig = {
 	"apiKey": "AIzaSyAQ7YJxZruXp5RhMetYq1idFJ8-y0svN-s",
@@ -67,6 +76,7 @@ export default component({
   render ({props, state}) {
     return <App
       classRefs={classes}
+      schoolRefs={schools}
       uid='A7rojVypFFNCYQb2A22wM189HWL2'
       classRef='-KrYhjpc_dLMXJ8-tMId'
       playlistRef='-Ke7eny8WMLluXLz3Ii5'

@@ -3,7 +3,7 @@ import mapValues from '@f/map-values'
 import map from '@f/map'
 import fire from '..'
 
-export default fire(({classRef, playlistRef, uid, classRefs}) => ({
+export default fire(({classRef, playlistRef, uid, classRefs, schoolRefs}) => ({
  activity: {
    ref: `/classes/${classRef}`,
    join: {
@@ -26,6 +26,14 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
      }
    }
  },
+   list: {
+    ref: `/classes`,
+    list: classRefs,
+    join: {
+      ref: '/users',
+      child: 'teacherID'
+    }
+  },
  myProgress: {
     ref: `/playlistsByUser/${uid}/byPlaylistRef/${playlistRef}`,
     join: {
@@ -55,13 +63,9 @@ export default fire(({classRef, playlistRef, uid, classRefs}) => ({
       child: 'teacherID'
     }]
   },
-  list: {
-    ref: `/classes`,
-    list: classRefs,
-    join: {
-      ref: '/users',
-      child: 'teacherID'
-    }
+  schools: {
+    ref:'/schools',
+    list: schoolRefs
   }
 }))(component({
 	render ({props}) {

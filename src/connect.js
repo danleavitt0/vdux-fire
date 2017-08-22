@@ -122,7 +122,10 @@ function connect (fn) {
         * subscribeAll ({actions}, path, refs) {
           for (let key in refs) {
             const ref = refs[key]
-            if (!ref) continue
+            if (!ref) {
+              yield actions.update({name: key})
+              continue
+            }
 
             if (ref.pageSize) {
               yield getLast({path, ref, key})
@@ -131,7 +134,7 @@ function connect (fn) {
               for (let leaf in ref.list) {
                 yield actions.subscribe(path, {...ref, ref: `${ref.ref}/${ref.list[leaf]}`}, key, ref.list[leaf])
               }
-              return
+              continue
             }
             yield actions.subscribe(path, ref, key)
           }
