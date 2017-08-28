@@ -52,7 +52,7 @@ export default fire(({classRef, playlistRef, uid, classRefs, schoolRefs}) => ({
 			childRef: (val, ref) => val.map(v => ref.child(v.key))
 		}
 	},
-  doubleJoin: false && {
+  doubleJoin: {
     ref: `/classes/${classRef}`,
     join: [{
       ref: `/users`,

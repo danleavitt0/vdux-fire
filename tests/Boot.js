@@ -19,22 +19,18 @@ import map from '@f/map'
  */
 
 const classes = [
-  '-KqVQxFjnKZkq9krvKTl',
-  '-KqVSs8SeJdW5UiDzYKx',
-  '-KqVTodanAnufQS2TseH',
-  '-KqVUhnwTrmcQk_DguOE',
-  '-KqVZu27_KqRwec1hIPO',
-  '-KqZLr-0801Qwql8Xcbw',
-  '-KqZUemnM6RTvu10W4X6'
+  '-KsBAt8vlTFRQHPybdjf',
+  '-KsBJqRgU1JoutpPYtcI',
+  '-KsBUU9GAcO9RmYv_AqG',
+  '-KsKjAI_KnuEMPQhIpin',
+  '-KsLMmhEv8OhfmXGIFwq'
  ]
 
 const schools = [
-  '-Ks5Rx7qPFrRoih0rHJH',
-  '-Ks5S4pkSqozmPsnmg-n',
-  '-Ks5S8YJER3kstWO10_k',
-  '-Ks5SPPCS471yZUBrtiQ',
-  '-Ks5dEE7c9snbnla5-fq',
-  '-Ks63ksRbBTwGchN3hS5'
+  '-KsBAqCrLu1OxcYDN7fg',
+  '-KsBJoQOirD2EdDdVSH2',
+  '-KsBS8NF1s2vaReVHF0C',
+  '-KsKj8Y5g3K-R1iMhHMV'
 ]
 
 const apiServer = process.env.API_SERVER
@@ -78,8 +74,8 @@ export default component({
       classRefs={classes}
       schoolRefs={schools}
       uid='A7rojVypFFNCYQb2A22wM189HWL2'
-      classRef='-KrYhjpc_dLMXJ8-tMId'
-      playlistRef='-Ke7eny8WMLluXLz3Ii5'
+      classRef='-KsLMmhEv8OhfmXGIFwq'
+      playlistRef='-KdCvzTwsCqeM26lzted'
       {...state}
       {...props} />
   },
