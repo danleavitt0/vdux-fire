@@ -12,6 +12,7 @@ import filter from '@f/filter'
 import splice from '@f/splice'
 import map from '@f/map-obj'
 import union from '@f/union'
+import diffKeys from '@f/diff-keys'
 
 const orderParams = /orderByValue|orderByChild|orderByKey/gi
 
@@ -47,7 +48,8 @@ function connect (fn) {
       * onCreate ({props, state, path, actions, context}) {
         const mapping = fn(props, context)
         if (objSome(mapping, (val = {}, key) => {
-          return val.pageSize && !(val.queryParams && val.queryParams.find(v => v.search(orderParams) > -1))
+          const queryParams = stringToQuery(val.ref || val).queryParams || val.queryParams
+          return val.pageSize && !(queryParams && queryParams.find(v => v.search(orderParams) > -1))
         })) {
           throw new Error('vdux-fire error: pageSize requires an orderBy queryParam')
         }
@@ -59,8 +61,8 @@ function connect (fn) {
           // console.log('update', prev.props, next.props)
           const prevProps = fn(prev.props)
           const nextProps = fn(next.props)
-          const newProps = filter((prop, key) => !prevProps[key] || prevProps[key] !== prop, nextProps)
-          const removeProps = filter((prop, key) => !nextProps[key] || nextProps[key] !== prop, prevProps)
+          const newProps = filter((prop, key) => !prevProps[key] || !deepEqual(prevProps[key], prop), nextProps)
+          const removeProps = filter((prop, key) => !nextProps[key] || !deepEqual(nextProps[key], prop), prevProps)
           if (Object.keys(removeProps).length > 0) {
             yield unsubscribeAll(next.path, removeProps)
           }
@@ -139,7 +141,7 @@ function connect (fn) {
             yield actions.subscribe(path, ref, key)
           }
         },
-        * mergeValue ({state, actions}, {name, value, key, page, prevSib, orderBy}) {
+        * mergeArrayValue ({state, actions}, {name, value, key, page, prevSib, orderBy}) {
           const list = state[name].value
             ? join(state[name].value, {val: value, key}, prevSib)
             : [{val: value, key}]
@@ -168,6 +170,16 @@ function connect (fn) {
           }
         }),
         update,
+        mergeValue: (state, {name, value, key}) => ({
+          [name]: {
+            ...(state[name] || {}),
+            loading: false,
+            value: {
+              ...state[name].value,
+              [key]: displayData(state, name, value, key)
+            }
+          }
+        }),
         mapNewState: (state, payload) => ({
           ...state,
           ...payload
@@ -193,6 +205,18 @@ function connect (fn) {
   }
 }
 
+function displayData (state, name, value, key) {
+  if (state[name] && state[name][key] && typeof state[name][key] === 'object') {
+    console.log((state[name] || {}).value[key])
+    return   {
+      ...(state[name] || {}).value[key],
+      ...value
+    }
+  } else {
+    return value
+  }
+}
+
 function update (state, payload) {
   if (payload.childKey) {
     return {
@@ -215,6 +239,19 @@ function update (state, payload) {
       ...payload,
       loading: false
     }
+  }
+}
+
+function stringToQuery (ref) {
+  if (!ref || ref.indexOf('#') === -1 && ref.indexOf('[') === -1) return {url: ref}
+  if (typeof ref === 'object') return ref
+  const typeRe = /\[(.*?)\]/gi
+  const type = typeRe.exec(ref)
+  const split = ref.replace(typeRe, '').split('#')
+  return {
+    queryParams: split[1] && split[1].split('&'),
+    type: type ? type[1] : null,
+    url: split[0]
   }
 }
 
@@ -246,12 +283,12 @@ function * unsubscribeAll (path, refs) {
   }
 }
 
-function orderByToKey (sort, val) {
+function orderByToKey (sort, {value, key}) {
   const [orderBy, child] = sort.split('=')
   const orders = {
-    'orderByKey': val.key,
-    'orderByValue': val.value,
-    'orderByChild': val[child]
+    'orderByKey': key,
+    'orderByValue': value,
+    'orderByChild': value[child]
   }
   return orders[orderBy]
 }

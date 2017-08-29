@@ -52,7 +52,7 @@ function mw ({dispatch, getState, actions}) {
 
   function inval (payload) {
     const {ref, value, name, page, mergeValues, orderBy, error, childKey} = payload
-    const update = mergeValues ? actions.mergeValue : actions.update
+    const update = mergeValues ? actions.mergeArrayValue : actions.update
     return dispatch(update({ref, value, name, page, orderBy, error, childKey}))
   }
 
@@ -168,16 +168,27 @@ function mw ({dispatch, getState, actions}) {
         .then(dispatchResults)
         .catch(error => dispatch(invalidate({ref: url, name, error})))
     }
-    if (pageSize) {
+    if (type === 'limitData') {
       dbref.on('child_added', dispatchMerge)
       dbref.on('child_removed', (snap) => dispatch(actions.removeKey({name, key: snap.key})))
-      dbref.on('child_changed', (snap, prevSib) => dispatchMerge(snap, prevSib, true))
+      dbref.on('child_changed', dispatchMerge)
+      return
+    }
+    if (pageSize) {
+      dbref.on('child_added', dispatchArrayMerge)
+      dbref.on('child_removed', (snap) => dispatch(actions.removeKey({name, key: snap.key})))
+      dbref.on('child_changed', (snap, prevSib) => dispatchArrayMerge(snap, prevSib, true))
       return 
     }
     dbref.on('value', (snap) => {
       const value = orderData(snap, bind)
       const arrJoin = [].concat(join)
-      const p = join
+      const p = maybeJoin(value, arrJoin)
+      p.then(dispatchResults)
+    }, (error) => dispatch(invalidate({ref: url, name, error})))
+
+    function maybeJoin (value, arrJoin) {
+      return join
         ? Promise.all(mapValues((j) => joinResults(value, j, 'on'), arrJoin))
             .then(vals => Array.isArray(join)
               ? vals.reduce((acc, val, key) => ({
@@ -187,8 +198,7 @@ function mw ({dispatch, getState, actions}) {
               : vals[0]
             )
         : Promise.resolve(value)
-      p.then(dispatchResults)
-    }, (error) => dispatch(invalidate({ref: url, name, error})))
+    }
 
     function joinResults (value, join, listener) {
       if (!join.child) {
@@ -196,20 +206,21 @@ function mw ({dispatch, getState, actions}) {
       }
       if (isEmpty(value)) return Promise.resolve(value)
       return buildChildRef(value, db.ref(join.ref), join)
-        .then((refs) => Array.isArray(refs) ? Promise.all(toPromise(refs, listener)) : Promise.props(toPromise(refs, listener)))
+        .then((refs) => gatherPromises(refs, listener))
         .then(populateVal => Array.isArray(value)
           ? value.map((v, i) => ({...v, [join.child]: populateVal[i]}))
-          : {...value, [join.child]: Array.isArray(populateVal)
-              ? reduce((acc, val) => ({...acc, [val.key]: val}), {}, populateVal)
-              : populateVal
-            }
+          : {...value, [join.child]: populateVal}
         )
         .catch(error => dispatch(invalidate({ref: url, name, error})))
     }
 
-    function dispatchMerge (snap, prevSib, isEdit) {
+    function dispatchArrayMerge (snap, prevSib) {
       const value = snap.val()
-      dispatch(actions.mergeValue({name, value, key: snap.key, prevSib, orderBy}))
+      dispatch(actions.mergeArrayValue({name, value, key: snap.key, prevSib, orderBy}))
+    }
+
+    function dispatchMerge (snap) {
+      dispatch(actions.mergeValue({name, value: snap.val(), key: snap.key}))
     }
 
     function dispatchResults (value) {
@@ -222,6 +233,16 @@ function mw ({dispatch, getState, actions}) {
   }
 }
 
+function gatherPromises (refs, listener) {
+  const promises = toPromise(refs, listener)
+  if (Array.isArray(refs)) {
+    return Promise.all(promises)
+  } else if (typeof refs === 'object' && !refs.database) {
+    return Promise.props(promises)
+  }
+  return Promise.resolve(promises)
+}
+
 function buildChildRef (value, ref, join) {
   if (!join.childRef) {
     if (Array.isArray(value)) {
@@ -231,7 +252,7 @@ function buildChildRef (value, ref, join) {
   }
   if (typeof join.childRef === 'function') {
     const res = join.childRef(value, db.ref(join.ref))
-    return typeof res === 'object' && !Array.isArray(res)
+    return typeof res === 'object' && !res.database && !Array.isArray(res)
       ? Promise.props(map((val, key) => val.then(v => v).catch(() => {}), promisify(res)))
       : Promise.resolve(res)
     // return typeof res === 'object' ? Promise.props(res) : Promise.resolve(res)
@@ -252,7 +273,7 @@ function toPromise (ref, listener) {
   } else if (typeof ref === 'object' && !ref.database) {
     return map((val, key) => val ? getPromise(val).then(s => ({...s.val(), key: s.key})) : val, ref)
   } else {
-    return getPromise(ref).then(s => ({...s.val(), key: s.key}))
+    return getPromise(ref).then(s => Array.isArray(s.val()) ? s.val() : ({...s.val(), key: s.key}))
   }
   function getPromise (r) {
     return listener === 'on'

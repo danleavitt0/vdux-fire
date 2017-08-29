@@ -34,6 +34,10 @@ export default fire(({classRef, playlistRef, uid, classRefs, schoolRefs}) => ({
       child: 'teacherID'
     }
   },
+userProfile: {
+  ref: `/users/${uid}`,
+  type: 'limitData'
+},
  myProgress: {
     ref: `/playlistsByUser/${uid}/byPlaylistRef/${playlistRef}`,
     join: {
@@ -44,8 +48,9 @@ export default fire(({classRef, playlistRef, uid, classRefs, schoolRefs}) => ({
       // }
     }
   },
-  inProgress: false && {
+  inProgress: {
 		ref: `/playlistsByUser/${uid}/inProgress#orderByChild=lastEdited`,
+    pageSize: 10,
 		join: {
 			ref: '/playlistInstances',
 			child: 'playlistValue',

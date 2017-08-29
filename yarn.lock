@@ -88,6 +88,10 @@
   dependencies:
     "@f/foreach" "^1.2.0"
 
+"@f/diff-keys@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@f/diff-keys/-/diff-keys-1.0.0.tgz#aa8c4a753bac35d593964a36c6b74c9a6649965e"
+
 "@f/dom-events@^1.0.3", "@f/dom-events@^1.0.4":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@f/dom-events/-/dom-events-1.0.4.tgz#82d7209678bcb292a41882a1a813736d53ef13e7"

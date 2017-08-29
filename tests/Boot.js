@@ -73,7 +73,7 @@ export default component({
     return <App
       classRefs={classes}
       schoolRefs={schools}
-      uid='A7rojVypFFNCYQb2A22wM189HWL2'
+      uid='b1V2uAmlCieLOdP749PkdhGxfUw2'
       classRef='-KsLMmhEv8OhfmXGIFwq'
       playlistRef='-KdCvzTwsCqeM26lzted'
       {...state}
