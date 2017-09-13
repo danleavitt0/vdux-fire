@@ -53,7 +53,14 @@ function mw ({dispatch, getState, actions}) {
   function inval (payload) {
     const {ref, value, name, page, mergeValues, orderBy, error, childKey} = payload
     const update = mergeValues ? actions.mergeArrayValue : actions.update
-    return dispatch(update({ref, value, name, page, orderBy, error, childKey}))
+    return map((path) => dispatch(
+      toEphemeral(
+        path,
+        reducer,		
+        update({ref, value, name, page, orderBy, error, childKey})
+      )),
+      refs[ref]
+    )
   }
 
   function pushHandler (payload) {
@@ -178,7 +185,7 @@ function mw ({dispatch, getState, actions}) {
       dbref.on('child_added', dispatchArrayMerge)
       dbref.on('child_removed', (snap) => dispatch(actions.removeKey({name, key: snap.key})))
       dbref.on('child_changed', (snap, prevSib) => dispatchArrayMerge(snap, prevSib, true))
-      return 
+      return
     }
     dbref.on('value', (snap) => {
       const value = orderData(snap, bind)
@@ -339,7 +346,7 @@ function orderByToKey (sort, val) {
   const orders = {
     'orderByKey': () => val.key,
     'orderByValue': () => val.value,
-    'orderByChild': child => val[child] 
+    'orderByChild': child => val[child]
   }
   return orders[sort]
 }
