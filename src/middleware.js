@@ -56,7 +56,7 @@ function mw ({dispatch, getState, actions}) {
     return map((path) => dispatch(
       toEphemeral(
         path,
-        reducer,		
+        reducer,
         update({ref, value, name, page, orderBy, error, childKey})
       )),
       refs[ref]

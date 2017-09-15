@@ -38,6 +38,7 @@ userProfile: {
   ref: `/users/${uid}`,
   type: 'limitData'
 },
+jam: false,
  myProgress: {
     ref: `/playlistsByUser/${uid}/byPlaylistRef/${playlistRef}`,
     join: {

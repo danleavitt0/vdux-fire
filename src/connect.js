@@ -48,6 +48,7 @@ function connect (fn) {
       * onCreate ({props, state, path, actions, context}) {
         const mapping = fn(props, context)
         if (objSome(mapping, (val = {}, key) => {
+          if (Object.keys(val).length === 0) return false
           const queryParams = stringToQuery(val.ref || val).queryParams || val.queryParams
           return val.pageSize && !(queryParams && queryParams.find(v => v.search(orderParams) > -1))
         })) {
@@ -207,7 +208,6 @@ function connect (fn) {
 
 function displayData (state, name, value, key) {
   if (state[name] && state[name][key] && typeof state[name][key] === 'object') {
-    console.log((state[name] || {}).value[key])
     return   {
       ...(state[name] || {}).value[key],
       ...value
