@@ -5,7 +5,6 @@ import isEmpty from 'lodash/isEmpty'
 import firebase from 'firebase'
 import reducer from './reducer'
 import Switch from '@f/switch'
-import reduce from '@f/reduce'
 import Promise from 'bluebird'
 import map from '@f/map'
 
@@ -99,7 +98,7 @@ function mw ({dispatch, getState, actions}) {
       join: q.ref.join,
       bindAs: buildQueryParams(bindAs).value,
       dbref: queryParams ? reduceParams(qp, dbRef) : dbRef,
-      mergeValues: mergeValues || pageSize ? true : false,
+      mergeValues: mergeValues || pageSize || false,
       orderBy: orderBy[0]
     }
   }
@@ -114,7 +113,6 @@ function mw ({dispatch, getState, actions}) {
     const query = ref.ref
       ? {...ref, ...stringToQuery(ref.ref)}
       : stringToQuery(ref)
-
 
     if (!refs[query.url] || refs[query.url].length < 1) {
       refs[query.url] = [path]
@@ -152,7 +150,7 @@ function mw ({dispatch, getState, actions}) {
   function getLastItem (payload) {
     const builtQuery = buildQuery(payload)
     const newPayload = {...builtQuery, pageSize: null, queryParams: (builtQuery.queryParams || []).concat('limitToLast=1')}
-    const {dbref, name, orderBy, key} = refBuilder(newPayload)
+    const {dbref, orderBy, key} = refBuilder(newPayload)
     dbref.once('child_added')
       .then(snap => dispatch(actions.setLastItem({snap, name: key, orderBy})))
       .catch(console.error)
@@ -161,7 +159,7 @@ function mw ({dispatch, getState, actions}) {
   function addListener (payload) {
     const { url, name, dbref, type, join, pageSize, childKey,
       bindAs, mergeValues, orderBy, queryParams, page } = refBuilder(payload)
-    const bind = queryParams && bindAs === 'object' || !queryParams
+    const bind = (queryParams && bindAs === 'object') || !queryParams
       ? 'object'
       : 'array'
     if (type === 'once') {
@@ -271,8 +269,6 @@ function buildChildRef (value, ref, join) {
 function promisify (data) {
   return map(val => isPromise(val) ? val : Promise.resolve(val), data)
 }
-
-
 
 function toPromise (ref, listener) {
   if (Array.isArray(ref)) {

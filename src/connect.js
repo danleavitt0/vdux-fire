@@ -3,16 +3,12 @@
 import {subscribe, unsubscribe, getLast} from './actions'
 import {component, element} from 'vdux'
 import deepEqual from '@f/deep-equal'
-import mapValues from '@f/map-values'
-import objEqual from '@f/equal-obj'
 import objSome from 'object-some'
 import {mw} from './middleware'
 import reducer from './reducer'
 import filter from '@f/filter'
 import splice from '@f/splice'
 import map from '@f/map-obj'
-import union from '@f/union'
-import diffKeys from '@f/diff-keys'
 
 const orderParams = /orderByValue|orderByChild|orderByKey/gi
 
@@ -32,7 +28,6 @@ function mapState (obj) {
         //   yield actions.setPageSize(pageSize)
         // }
         // {...mapping, queryParams: (queryParams || []).concat(`limitToFirst=${pageSize}`)}
-
 
 function connect (fn) {
   return function (Ui) {
@@ -76,7 +71,6 @@ function connect (fn) {
       },
 
       render ({props, state, children, actions}) {
-        const mapping = fn(props)
         // XXX CLEAN THIS UP
         const injectedNext = map((val, key) => {
           if (val && val.pageSize && !val.done) {
@@ -103,7 +97,7 @@ function connect (fn) {
             path,
             {
               ...mapping[key],
-              queryParams: (mapping[key].queryParams || []).concat(`startAt=${cursor}`,),
+              queryParams: (mapping[key].queryParams || []).concat(`startAt=${cursor}`),
               mergeValues: true,
               page: pageNum
             },
@@ -112,15 +106,8 @@ function connect (fn) {
         },
         * subscribe ({state}, path, ref, key, childKey) {
           if (ref) {
-            typeof (ref) === 'string'
-              ? yield subscribe({path, ref, name: key, childKey})
-              : yield subscribe({
-                  ref,
-                  path,
-                  childKey,
-                  name: key
-                })
-            }
+            yield subscribe({path, ref, name: key, childKey})
+          }
         },
         * subscribeAll ({actions}, path, refs) {
           for (let key in refs) {
@@ -208,7 +195,7 @@ function connect (fn) {
 
 function displayData (state, name, value, key) {
   if (state[name] && state[name][key] && typeof state[name][key] === 'object') {
-    return   {
+    return {
       ...(state[name] || {}).value[key],
       ...value
     }
@@ -275,11 +262,11 @@ function * unsubscribeAll (path, refs) {
       typeof (ref) === 'string'
         ? yield unsubscribe({path, ref, name: key})
         : yield unsubscribe({
-            ref: ref.ref,
-            name: key,
-            path
-          })
-      }
+          ref: ref.ref,
+          name: key,
+          path
+        })
+    }
   }
 }
 

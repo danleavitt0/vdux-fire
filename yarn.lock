@@ -558,6 +558,10 @@
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@f/zip-obj/-/zip-obj-1.1.1.tgz#efbdfd3e890db2ad9d63c772d1622665fe065743"
 
+"@firebase/webchannel-wrapper@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@firebase/webchannel-wrapper/-/webchannel-wrapper-0.2.1.tgz#2c4dbc15edd1de4f656d543a6f512ded7978ef72"
+
 abbrev@1:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.0.9.tgz#91b4792588a7738c25f35dd6f63752a2f8776135"
@@ -1562,10 +1566,11 @@ fill-range@^2.1.0:
     repeat-element "^1.1.2"
     repeat-string "^1.5.2"
 
-firebase@^4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/firebase/-/firebase-4.3.0.tgz#21d95a92f862c7e406ddf871c173b50f153f8d46"
+firebase@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/firebase/-/firebase-4.5.0.tgz#e0973a9803b74c4c9d73d19f874712e6e9d16ba7"
   dependencies:
+    "@firebase/webchannel-wrapper" "^0.2.1"
     dom-storage "^2.0.2"
     faye-websocket "0.9.3"
     jsonwebtoken "^7.3.0"
