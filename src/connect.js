@@ -19,7 +19,7 @@ function mapState (obj) {
     pageSize: url.pageSize,
     loading: true,
     error: null,
-    value: null
+    value: undefined
   }), obj)
 }
 
