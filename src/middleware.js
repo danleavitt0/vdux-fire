@@ -69,7 +69,7 @@ function mw({ dispatch, getState, actions }) {
             reducer,
             update({
               ref,
-              value: !value && isNaN(value) ? undefined : value,
+              value: !value && value !== 0 ? undefined : value,
               name,
               page,
               orderBy,
